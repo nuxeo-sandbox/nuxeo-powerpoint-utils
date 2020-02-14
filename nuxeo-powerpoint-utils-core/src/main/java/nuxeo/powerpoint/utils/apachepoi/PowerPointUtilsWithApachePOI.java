@@ -28,8 +28,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.io.FileUtils;
@@ -41,8 +43,10 @@ import org.apache.poi.POIXMLProperties.CustomProperties;
 import org.apache.poi.POIXMLProperties.ExtendedProperties;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
 import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
@@ -58,6 +62,8 @@ import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
 import org.nuxeo.runtime.api.Framework;
 import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperties;
 import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperty;
+import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontList;
+import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontListEntry;
 
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
@@ -65,7 +71,7 @@ import nuxeo.powerpoint.utils.api.PowerPointUtils;
  * @since 10.10
  */
 public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
-    
+
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     public PowerPointUtilsWithApachePOI() {
@@ -74,17 +80,18 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
     // ==============================> PROPERTIES
     public JSONObject getProperties(Blob blob) {
-        
+
         JSONObject obj = new JSONObject();
-        
+
         try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
             Dimension dim = ppt.getPageSize();
-            obj.put("width", dim.width);
-            obj.put("height", dim.height);
-            
+            obj.put("Width", dim.width);
+            obj.put("Height", dim.height);
+
             obj.put("AutoCompressPictures", ppt.getCTPresentation().getAutoCompressPictures());
             obj.put("CompatMode", ppt.getCTPresentation().getCompatMode());
-            
+
+            // ================================== Properties
             POIXMLProperties props = ppt.getProperties();
             CoreProperties coreProps = props.getCoreProperties();
             obj.put("Category", coreProps.getCategory());
@@ -101,7 +108,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("Revision", coreProps.getRevision());
             obj.put("Subject", coreProps.getSubject());
             obj.put("Title", coreProps.getTitle());
-            
+
             ExtendedProperties extProps = props.getExtendedProperties();
             obj.put("CountCharacters", extProps.getCharacters());
             obj.put("CountHiddenSlides", extProps.getHiddenSlides());
@@ -121,19 +128,60 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("Manager", extProps.getManager());
             obj.put("PresentationFormat", extProps.getPresentationFormat());
             obj.put("Template", extProps.getTemplate());
-            // ==================================
-            
-            
-        } catch (IOException |JSONException e) {
+
+            // ================================== Objects and slides
+            // Slides: Title and master used
+            JSONArray arr = new JSONArray();
+            for (XSLFSlide slide : ppt.getSlides()) {
+                JSONObject slideInfo = new JSONObject();
+                slideInfo.put("SlideNumber", slide.getSlideNumber());
+                slideInfo.put("Title", slide.getTitle() == null ? "" : slide.getTitle());
+                slideInfo.put("Theme", slide.getTheme().getName());
+                slideInfo.put("Master", slide.getSlideLayout().getName());
+                arr.put(slideInfo);
+            }
+            obj.put("Slidesinfo", arr);
+
+            // Master slides (array of themes, for each them, list of layouts)
+            arr = new JSONArray();
+            HashSet<String> fonts = new HashSet<String>();
+            for (XSLFSlideMaster master : ppt.getSlideMasters()) {
+                String masterTheme = master.getTheme().getName();
+                JSONArray arrLayouts = new JSONArray();
+                for (XSLFSlideLayout layout : master.getSlideLayouts()) {
+                    arrLayouts.put(layout.getName());
+                }
+                JSONObject oneTheme = new JSONObject();
+                oneTheme.put(masterTheme, arrLayouts);
+                arr.put(oneTheme);
+                
+                
+                fonts.add(master.getTheme().getMajorFont());
+                fonts.add(master.getTheme().getMinorFont());
+            }
+            obj.put("MasterSlides", arr);
+            obj.put("Fonts", fonts);
+
+            // Embedded Fonts
+            CTEmbeddedFontList fontList = ppt.getCTPresentation().getEmbeddedFontLst();
+            arr = new JSONArray();
+            if (fontList != null) {
+                for (CTEmbeddedFontListEntry entry : fontList.getEmbeddedFontList()) {
+                    arr.put(entry.getFont().getTypeface());
+                }
+            }
+            obj.put("EmbeddedFonts", arr);
+
+        } catch (IOException | JSONException e) {
             throw new NuxeoException("Failed to get slides deck properties", e);
         }
-        
+
         return obj;
     }
 
     // ==============================> SPLIT
     /*
-     * IMPORTANT
+     * <b>IMPORTANT</b>
      * As of today (Apache POI 4.1.1, January 2020), it is very very difficult to extract a slide. There is no API for
      * this. Getting the master, the layout, getting the related/embedded images, graphs etc. is super cumbersome, and
      * for once, the Internet is not helping. It confirms it's extremely hard to make sure you extract a slide with all
