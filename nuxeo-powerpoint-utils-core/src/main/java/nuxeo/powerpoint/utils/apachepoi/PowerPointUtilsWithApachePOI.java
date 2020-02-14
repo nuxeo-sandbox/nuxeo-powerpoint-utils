@@ -18,20 +18,33 @@
  */
 package nuxeo.powerpoint.utils.apachepoi;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.POIXMLProperties;
+import org.apache.poi.POIXMLProperties.CoreProperties;
+import org.apache.poi.POIXMLProperties.CustomProperties;
+import org.apache.poi.POIXMLProperties.ExtendedProperties;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
 import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.DocumentModel;
@@ -43,6 +56,8 @@ import org.nuxeo.ecm.platform.mimetype.MimetypeNotFoundException;
 import org.nuxeo.ecm.platform.mimetype.interfaces.MimetypeRegistry;
 import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
 import org.nuxeo.runtime.api.Framework;
+import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperties;
+import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperty;
 
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
@@ -50,9 +65,70 @@ import nuxeo.powerpoint.utils.api.PowerPointUtils;
  * @since 10.10
  */
 public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
+    
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     public PowerPointUtilsWithApachePOI() {
 
+    }
+
+    // ==============================> PROPERTIES
+    public JSONObject getProperties(Blob blob) {
+        
+        JSONObject obj = new JSONObject();
+        
+        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+            Dimension dim = ppt.getPageSize();
+            obj.put("width", dim.width);
+            obj.put("height", dim.height);
+            
+            obj.put("AutoCompressPictures", ppt.getCTPresentation().getAutoCompressPictures());
+            obj.put("CompatMode", ppt.getCTPresentation().getCompatMode());
+            
+            POIXMLProperties props = ppt.getProperties();
+            CoreProperties coreProps = props.getCoreProperties();
+            obj.put("Category", coreProps.getCategory());
+            obj.put("ContentStatus", coreProps.getContentStatus());
+            obj.put("ContentType", coreProps.getContentType());
+            obj.put("Created", DATE_FORMAT.format(coreProps.getCreated()));
+            obj.put("Creator", coreProps.getCreator());
+            obj.put("Description", coreProps.getDescription());
+            obj.put("Identifier", coreProps.getIdentifier());
+            obj.put("Keywords", coreProps.getKeywords());
+            obj.put("LastModifiedByUser", coreProps.getLastModifiedByUser());
+            obj.put("LastPrinted", DATE_FORMAT.format(coreProps.getLastPrinted()));
+            obj.put("Modified", DATE_FORMAT.format(coreProps.getModified()));
+            obj.put("Revision", coreProps.getRevision());
+            obj.put("Subject", coreProps.getSubject());
+            obj.put("Title", coreProps.getTitle());
+            
+            ExtendedProperties extProps = props.getExtendedProperties();
+            obj.put("CountCharacters", extProps.getCharacters());
+            obj.put("CountHiddenSlides", extProps.getHiddenSlides());
+            obj.put("CountLines", extProps.getLines());
+            obj.put("CountMMClips", extProps.getMMClips());
+            obj.put("CountNotes", extProps.getNotes());
+            obj.put("CountPages", extProps.getPages());
+            obj.put("CountParagraphs", extProps.getParagraphs());
+            obj.put("CountSlides", extProps.getSlides());
+            obj.put("CountTotalTime", extProps.getTotalTime());
+            obj.put("CountWords", extProps.getWords());
+            // ----------------------------
+            obj.put("Application", extProps.getApplication());
+            obj.put("AppVersion", extProps.getAppVersion());
+            obj.put("Company", extProps.getCompany());
+            obj.put("HyperlinkBase", extProps.getHyperlinkBase());
+            obj.put("Manager", extProps.getManager());
+            obj.put("PresentationFormat", extProps.getPresentationFormat());
+            obj.put("Template", extProps.getTemplate());
+            // ==================================
+            
+            
+        } catch (IOException |JSONException e) {
+            throw new NuxeoException("Failed to get slides deck properties", e);
+        }
+        
+        return obj;
     }
 
     // ==============================> SPLIT

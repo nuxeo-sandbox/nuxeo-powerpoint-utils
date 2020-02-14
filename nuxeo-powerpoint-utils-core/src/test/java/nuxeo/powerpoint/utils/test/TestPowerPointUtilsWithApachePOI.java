@@ -20,16 +20,26 @@ package nuxeo.powerpoint.utils.test;
 
 import static org.junit.Assert.*;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import org.apache.poi.POITextExtractor;
+import org.apache.poi.POIXMLProperties;
+import org.apache.poi.POIXMLProperties.CoreProperties;
 import org.apache.poi.extractor.ExtractorFactory;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFCommentAuthors;
+import org.apache.poi.xslf.usermodel.XSLFNotesMaster;
+import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.common.utils.FileUtils;
@@ -102,6 +112,22 @@ public class TestPowerPointUtilsWithApachePOI {
                 }
             }
         }
+    }
+
+    @Test
+    public void testSimple() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        JSONObject result = pptUtils.getProperties(testFileBlob);
+        
+        System.out.println("\n" + result.toString(2));
     }
 
 }
