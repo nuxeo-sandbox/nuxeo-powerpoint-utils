@@ -28,6 +28,7 @@ import javax.inject.Inject;
 
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -115,6 +116,23 @@ public class TestPowerPointUtilsWithApachePOI {
 
         PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
         JSONObject result = pptUtils.getProperties(testFileBlob);
+        
+        // See, in PowerPoint, File > Properties of the test file.
+        assertEquals("Nuxeo Unit Testing", result.get("Creator"));
+        assertEquals("Nuxeo", result.get("Company"));
+        assertEquals("Widescreen", result.get("PresentationFormat"));
+        assertEquals(11, result.get("CountSlides"));
+        assertEquals(1, result.get("CountHiddenSlides"));
+        
+        JSONArray arr = result.getJSONArray("MasterSlides");
+        assertEquals(2, arr.length());
+        // First one is "Office Theme"
+        JSONObject theme = arr.getJSONObject(0);
+        //getJSONObject does not return null is there is no value, it throws an exception
+        assertEquals("Office Theme", theme.get("Name"));
+        // Could also check the layouts...
+        
+        // Could also check info on every slides...
         
         System.out.println("\n" + result.toString(2));
     }

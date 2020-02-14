@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -130,7 +131,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("Template", extProps.getTemplate());
 
             // ================================== Objects and slides
-            // Slides: Title and master used
+            // Slides: Misc. info (title, master, theme, ...)
             JSONArray arr = new JSONArray();
             for (XSLFSlide slide : ppt.getSlides()) {
                 JSONObject slideInfo = new JSONObject();
@@ -152,9 +153,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                     arrLayouts.put(layout.getName());
                 }
                 JSONObject oneTheme = new JSONObject();
-                oneTheme.put(masterTheme, arrLayouts);
+                oneTheme.put("Name", masterTheme);
+                oneTheme.put("Layouts", arrLayouts);
                 arr.put(oneTheme);
-                
                 
                 fonts.add(master.getTheme().getMajorFont());
                 fonts.add(master.getTheme().getMinorFont());
