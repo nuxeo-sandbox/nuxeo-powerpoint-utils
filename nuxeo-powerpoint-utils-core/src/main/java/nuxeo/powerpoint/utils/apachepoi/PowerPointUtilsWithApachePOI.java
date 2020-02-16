@@ -64,8 +64,6 @@ import nuxeo.powerpoint.utils.api.PowerPointUtils;
  */
 public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-
     public PowerPointUtilsWithApachePOI() {
 
     }
@@ -80,10 +78,10 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             Dimension dim = ppt.getPageSize();
             obj.put("Width", dim.width);
             obj.put("Height", dim.height);
-
+           
             obj.put("AutoCompressPictures", ppt.getCTPresentation().getAutoCompressPictures());
             obj.put("CompatMode", ppt.getCTPresentation().getCompatMode());
-
+            
             // ================================== Properties
             POIXMLProperties props = ppt.getProperties();
             CoreProperties coreProps = props.getCoreProperties();
@@ -101,7 +99,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("Revision", coreProps.getRevision());
             obj.put("Subject", coreProps.getSubject());
             obj.put("Title", coreProps.getTitle());
-
+            
             ExtendedProperties extProps = props.getExtendedProperties();
             obj.put("CountCharacters", extProps.getCharacters());
             obj.put("CountHiddenSlides", extProps.getHiddenSlides());
@@ -162,6 +160,11 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                 }
             }
             obj.put("EmbeddedFonts", arr);
+            
+            // Nop easy way to get fonts with Apache POI 3.17
+            // TODO: get fonts when switching to a higher version, if available
+            arr = new JSONArray();
+            obj.put("Fonts", arr);
 
         } catch (IOException | JSONException e) {
             throw new NuxeoException("Failed to get slides deck properties", e);
@@ -249,6 +252,17 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         BlobList blobs = splitPresentation(blob);
 
         return blobs;
+    }
+    
+    // ==============================> MERGE
+    // Unfortunately, merging with Apache POI is extremely complex as soon as a slide is complex
+    // (complex background, specific font(s), multimedia file(s), ...)
+    // Notice that merging can be done using Aspose instead.
+    @Override
+    public Blob merge(BlobList blobs, String fileName) {
+        // TODO Auto-generated method stub
+        // return null;
+        throw new UnsupportedOperationException();
     }
 
     // ==============================> Utilities

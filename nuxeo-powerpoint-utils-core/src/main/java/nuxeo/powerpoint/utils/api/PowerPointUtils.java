@@ -19,7 +19,11 @@
 package nuxeo.powerpoint.utils.api;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
@@ -33,6 +37,12 @@ import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
 import org.nuxeo.runtime.api.Framework;
 
 public interface PowerPointUtils {
+    
+    public static final String PPTX_MIMETYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    
+    // Use this DateFormat to format the dates in <code>JSONObject getProperties(Blob blob)</code>
+    // For exampple: <code>obj.put("Created", DATE_FORMAT.format(yourPre.getADate()));</code>
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     /**
      * Returns a JSONObject with the presentation properties.
@@ -67,6 +77,24 @@ public interface PowerPointUtils {
     BlobList splitPresentation(DocumentModel input, String xpath) throws IOException;
     
     /**
+     * Merge all presentations to a single one, in the received order.
+     * Their own layouts and styles are preserved.
+     * If fileName is null or empty, the file name is set to "merged.pptx"
+     * Always create a.pptx blob. Adds ".pptx" to fileName if it does not end with .pptx.
+     * 
+     * If any of these condition applies for any blob in <code>blobs</code> is ignored (no conversion applies).
+     * Also, when a blob in <code>blobs</code> has zero slide, it is ignored.
+     * 
+     * If <code>blobs</code> is null or empty, null is returned.
+     * 
+     * @param blobs
+     * @param fileName
+     * @return
+     * @since 10.10
+     */
+    Blob merge(BlobList blobs, String fileName);
+    
+    /**
      * Helper utility getting the mime-type of a blob
      * 
      * @param blob
@@ -95,6 +123,28 @@ public interface PowerPointUtils {
         }
 
         return mimeType;
+    }
+    
+    /**
+     * Utility to ensure all providers use the name as stated in the interface.
+     * A merged presentation must ends with .pptx. If it is not the case, we add the ".pptx" suffix.
+     * A default name ("merged.pptx") is provided if fioeName is null or empty.
+     * 
+     * @param fileName
+     * @return The fileName with the corrcet name/extension 
+     * @since 10.10
+     */
+    public static String checkMergedFileName(String fileName) {
+        
+        if(StringUtils.isBlank(fileName)) {
+            return "merged.pptx";
+        }
+        
+        if(!fileName.toLowerCase().endsWith(".pptx")) {
+            return fileName + ".pptx";
+        }
+        
+        return fileName;
     }
 
 }

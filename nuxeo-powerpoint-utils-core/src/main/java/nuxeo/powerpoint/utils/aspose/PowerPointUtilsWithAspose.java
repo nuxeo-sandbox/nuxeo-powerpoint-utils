@@ -2,8 +2,6 @@ package nuxeo.powerpoint.utils.aspose;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -13,84 +11,63 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
-import com.aspose.slides.IDocumentProperties;
 import com.aspose.slides.IFontData;
 import com.aspose.slides.ISlideCollection;
-import com.aspose.slides.ISlideSize;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
 
+import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
 public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-
+    // ==============================> PROPERTIES
+    /*
+     * ApachePOI actually can get more info than Aspose, especially in the statistics part
+     * (number of words, f paragraphs, ...), as displayed to a user when using PowerPoint.
+     * But ApacheOI (in the version we use, at least) does not have info on fonts.
+     * So, basically, we get the info from Apache POI and add whatever is missing
+     */
     @Override
     public JSONObject getProperties(Blob blob) {
-        
-        JSONObject obj = new JSONObject();
-        
+
+        // Get everything Apache POI has in this implementation
+        PowerPointUtilsWithApachePOI pptPoi = new PowerPointUtilsWithApachePOI();
+        JSONObject obj = pptPoi.getProperties(blob);
+
         try {
             Presentation pres = new Presentation(blob.getStream());
-            
-            IDocumentProperties dp = pres.getDocumentProperties();
-            
-            ISlideSize slideSize = pres.getSlideSize();
-            obj.put("Width", slideSize.getSize().getWidth());
-            obj.put("Height", slideSize.getSize().getHeight());
-            /*
-            obj.put("AutoCompressPictures", ppt.getCTPresentation().getAutoCompressPictures());
-            obj.put("CompatMode", ppt.getCTPresentation().getCompatMode());
-            */
 
-            // ================================== Properties
-            obj.put("Category", dp.getCategory());
-            obj.put("ContentStatus", dp.getContentStatus());
-            obj.put("ContentType", dp.getContentType());
-            obj.put("Created", DATE_FORMAT.format(dp.getCreatedTime()));
-            obj.put("Creator", dp.getAuthor());
-            //obj.put("Description", dp.getDescription());
-            //obj.put("Identifier", dp.getIdentifier());
-            obj.put("Keywords", dp.getKeywords());
-            obj.put("LastModifiedByUser", dp.getLastSavedBy());
-            obj.put("LastPrinted", DATE_FORMAT.format(dp.getLastPrinted()));
-            obj.put("Modified", DATE_FORMAT.format(dp.getLastSavedTime()));
-            obj.put("Revision", dp.getRevisionNumber());
-            obj.put("Subject", dp.getSubject());
-            obj.put("Title", dp.getTitle());
-            // -------------------------------------
-            obj.put("Application", dp.getNameOfApplication());
-            obj.put("AppVersion", dp.getAppVersion());
-            obj.put("Company", dp.getCompany());
-            obj.put("HyperlinkBase", dp.getHyperlinkBase());
-            obj.put("Manager", dp.getManager());
-            obj.put("PresentationFormat", dp.getPresentationFormat());
-            //obj.put("Template", dp.getTemplate());
-            
-            JSONArray arr = new JSONArray();
-            for(IFontData font : pres.getFontsManager().getFonts()) {
-                arr.put(font.getFontName());
+            JSONArray arr;
+            if (!obj.has("Fonts")) {
+                arr = new JSONArray();
+                obj.put("Fonts", arr);
+            } else {
+                arr = obj.getJSONArray("Fonts");
             }
-            obj.put("Fonts",  arr);
+            if (obj.getJSONArray("Fonts").length() == 0) {
+                for (IFontData font : pres.getFontsManager().getFonts()) {
+                    arr.put(font.getFontName());
+                }
+            }
 
-            
         } catch (IOException | JSONException e) {
             throw new NuxeoException(e);
         }
-        
+
         return obj;
     }
 
     @Override
     public BlobList splitPresentation(Blob blob) throws IOException {
-        
+
         BlobList result = new BlobList();
-        
+
         String pptMimeType;
         String fileNameBase;
 
@@ -103,35 +80,35 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         fileNameBase = FilenameUtils.getBaseName(fileNameBase);
         fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
 
-        File originalFile = blob.getFile();
-        
         try {
             Presentation pres = new Presentation(blob.getStream());
-            
+
             File tempDirectory = FileUtils.getTempDirectory();
             int slidesCount = pres.getSlides().size();
             for (int i = 0; i < slidesCount; i++) {
-                
+
                 Presentation destPres = new Presentation();
                 ISlideCollection slds = destPres.getSlides();
                 slds.addClone(pres.getSlides().get_Item(i));
-                
+
                 File newFile = new File(tempDirectory, fileNameBase + (i + 1) + ".pptx");
                 destPres.save(newFile.getAbsolutePath(), SaveFormat.Pptx);
                 FileBlob fb = new FileBlob(newFile.getAbsoluteFile());
+                fb.setMimeType(pptMimeType);
                 result.add(fb);
             }
-            
-        }catch (IOException e) {
-            throw new NuxeoException(e);
+
+        } catch (IOException e) {
+            throw new NuxeoException("Failed to split PowerPoint presentation.", e);
         }
-        
+
         return result;
     }
 
+    // ==============================> SPLIT
     @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
-        
+
         if (StringUtils.isBlank(xpath)) {
             xpath = "file:content";
         }
@@ -139,6 +116,38 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         BlobList blobs = splitPresentation(blob);
 
         return blobs;
+    }
+
+    // ==============================> MERGE
+    @Override
+    public Blob merge(BlobList blobs, String fileName) {
+
+        Blob result = null;
+
+        fileName = PowerPointUtils.checkMergedFileName(fileName);
+        
+        Presentation destPres = new Presentation();
+        try {
+            for (Blob b : blobs) {
+                Presentation toMerge = new Presentation(b.getStream());
+                if (toMerge != null) {
+                    ISlideCollection slidesColl = toMerge.getSlides();
+                    slidesColl.forEach(slide -> {
+                        destPres.getSlides().addClone(slide);
+                    });
+                }
+            }
+
+            result = Blobs.createBlobWithExtension(".pptx");
+            destPres.save(result.getFile().getAbsolutePath(), SaveFormat.Pptx);
+            result.setFilename(fileName);
+            result.setMimeType(PowerPointUtils.PPTX_MIMETYPE);
+
+        } catch (IOException e) {
+            throw new NuxeoException("Failed to merge PowerPoint persentations.", e);
+        }
+
+        return result;
     }
 
 }
