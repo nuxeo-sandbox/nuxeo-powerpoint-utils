@@ -29,7 +29,6 @@ import nuxeo.powerpoint.utils.api.PowerPointUtils;
 public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-    private static final boolean IFontData = false;
 
     @Override
     public JSONObject getProperties(Blob blob) {
@@ -132,9 +131,14 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
     @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
+        
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        Blob blob = (Blob) input.getPropertyValue(xpath);
+        BlobList blobs = splitPresentation(blob);
+
+        return blobs;
     }
 
 }

@@ -15,6 +15,7 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.PathRef;
 
 import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
+import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 
 /**
  *
@@ -32,19 +33,36 @@ public class SplitPresentationOp {
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;
 
+    @Param(name = "useAspose", required = false)
+    protected Boolean useAspose;
+
     @OperationMethod
     public BlobList run(DocumentModel doc) throws IOException {
 
-        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        BlobList result;
+        
+        if (useAspose != null && useAspose) {
+            PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
+            result = asposePptUtils.splitPresentation(doc, xpath);
+        } else {
+            PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+            result = pptUtils.splitPresentation(doc, xpath);
+        }
 
-        return pptUtils.splitPresentation(doc, xpath);
+        return result;
     }
 
     @OperationMethod
     public BlobList run(Blob blob) throws IOException {
+        BlobList result;
+        if (useAspose != null && useAspose) {
+            PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
+            result = asposePptUtils.splitPresentation(blob);
+        } else {
+            PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+            result = pptUtils.splitPresentation(blob);
+        }
 
-        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
-
-        return pptUtils.splitPresentation(blob);
+        return result;
     }
 }
