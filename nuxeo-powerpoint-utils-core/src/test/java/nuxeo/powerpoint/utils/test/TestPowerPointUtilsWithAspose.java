@@ -46,6 +46,7 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
+import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 
 /**
  * @since 10.10
@@ -54,7 +55,7 @@ import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
 @Deploy("nuxeo.powerpoint.utils-core")
-public class TestPowerPointUtilsWithApachePOI {
+public class TestPowerPointUtilsWithAspose {
 
     public static final String BIG_PRESENTATION = "files/2020-Nuxeo-Overview-abstract.pptx";
 
@@ -71,7 +72,7 @@ public class TestPowerPointUtilsWithApachePOI {
 
         testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
 
-        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
         BlobList blobs = pptUtils.splitPresentation(testFileBlob);
 
         assertNotNull(blobs);
@@ -87,21 +88,25 @@ public class TestPowerPointUtilsWithApachePOI {
 
             List<XSLFSlide> allSlides = fullPres.getSlides();
 
+            // We check with Apache POI.
             for (int i = 0; i < blobs.size(); i++) {
                 Blob blob = blobs.get(i);
                 try (FileInputStream is = new FileInputStream(blob.getFile())) {
                     try (XMLSlideShow oneSlidePres = new XMLSlideShow(blob.getStream())) {
                         // Check we have only one
-                        assertEquals(1, oneSlidePres.getSlides().size());
+                        // WARNING: If using Aspose in demo mode, we always have a "Built with Aspose slide"
+                        int countSlides = oneSlidePres.getSlides().size();
+                        assertTrue(countSlides == 1 || countSlides == 2);
 
                         // Check the slides are the same
                         XSLFSlide originalSlide = allSlides.get(i);
-                        XSLFSlide thisSlide = oneSlidePres.getSlides().get(0);
+                        XSLFSlide thisSlide = oneSlidePres.getSlides().get(countSlides - 1);
                         assertTrue(TestUtils.slidesLookTheSame(originalSlide, thisSlide));
                     }
                 }
             }
         }
+
     }
 
     @Test
@@ -114,27 +119,27 @@ public class TestPowerPointUtilsWithApachePOI {
 
         testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
 
-        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
         JSONObject result = pptUtils.getProperties(testFileBlob);
-        
+
+        System.out.println("\n" + result.toString(2));
+
         // See, in PowerPoint, File > Properties of the test file.
         assertEquals("Nuxeo Unit Testing", result.get("Creator"));
         assertEquals("Nuxeo", result.get("Company"));
         assertEquals("Widescreen", result.get("PresentationFormat"));
         assertEquals(11, result.get("CountSlides"));
         assertEquals(1, result.get("CountHiddenSlides"));
-        
+
         JSONArray arr = result.getJSONArray("MasterSlides");
         assertEquals(2, arr.length());
         // First one is "Office Theme"
         JSONObject theme = arr.getJSONObject(0);
-        //getJSONObject does not return null is there is no value, it throws an exception
+        // getJSONObject does not return null is there is no value, it throws an exception
         assertEquals("Office Theme", theme.get("Name"));
         // Could also check the layouts...
-        
+
         // Could also check info on every slides...
-        
-        //System.out.println("\n" + result.toString(2));
     }
 
 }

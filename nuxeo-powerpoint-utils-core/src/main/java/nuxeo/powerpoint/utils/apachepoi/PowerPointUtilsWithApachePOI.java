@@ -26,27 +26,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.POIXMLProperties;
 import org.apache.poi.POIXMLProperties.CoreProperties;
-import org.apache.poi.POIXMLProperties.CustomProperties;
 import org.apache.poi.POIXMLProperties.ExtendedProperties;
-import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
 import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
+import org.apache.poi.xslf.usermodel.XSLFTheme;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,8 +54,6 @@ import org.nuxeo.ecm.platform.mimetype.MimetypeNotFoundException;
 import org.nuxeo.ecm.platform.mimetype.interfaces.MimetypeRegistry;
 import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
 import org.nuxeo.runtime.api.Framework;
-import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperties;
-import org.openxmlformats.schemas.officeDocument.x2006.customProperties.CTProperty;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontList;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontListEntry;
 
@@ -80,6 +71,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     }
 
     // ==============================> PROPERTIES
+    @Override
     public JSONObject getProperties(Blob blob) {
 
         JSONObject obj = new JSONObject();
@@ -145,9 +137,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
             // Master slides (array of themes, for each them, list of layouts)
             arr = new JSONArray();
-            HashSet<String> fonts = new HashSet<String>();
             for (XSLFSlideMaster master : ppt.getSlideMasters()) {
-                String masterTheme = master.getTheme().getName();
+                XSLFTheme  masterThemeObj = master.getTheme();
+                String masterTheme = masterThemeObj.getName();
                 JSONArray arrLayouts = new JSONArray();
                 for (XSLFSlideLayout layout : master.getSlideLayouts()) {
                     arrLayouts.put(layout.getName());
@@ -155,13 +147,11 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                 JSONObject oneTheme = new JSONObject();
                 oneTheme.put("Name", masterTheme);
                 oneTheme.put("Layouts", arrLayouts);
+                oneTheme.put("MasterFont", masterThemeObj.getMajorFont());
+                oneTheme.put("MinorFont", masterThemeObj.getMinorFont());
                 arr.put(oneTheme);
-                
-                fonts.add(master.getTheme().getMajorFont());
-                fonts.add(master.getTheme().getMinorFont());
             }
             obj.put("MasterSlides", arr);
-            obj.put("Fonts", fonts);
 
             // Embedded Fonts
             CTEmbeddedFontList fontList = ppt.getCTPresentation().getEmbeddedFontLst();
@@ -200,7 +190,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             return result;
         }
 
-        pptMimeType = getBlobMimeType(blob);
+        pptMimeType = PowerPointUtils.getBlobMimeType(blob);
         fileNameBase = blob.getFilename();
         fileNameBase = FilenameUtils.getBaseName(fileNameBase);
         fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
@@ -246,16 +236,10 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         return result;
     }
 
-    /**
-     * Returns a list of blobs, one/slide after splitting the presentation contained in the input document in the xpath
-     * field (if null or empty, default to "file:content"). Returns an empty list in the blob at xpath is null, or is
-     * not a presentation.
-     * 
-     * @param input, the document containing a PowerPoint presentation
-     * @param xpath, the field storing the presentation. Optional, "file:content" by default
-     * @return the list of blob, one/slide.
-     * @since 10.10
+    /*
+     * See <b>IMPORTANT</b> comment in <code>splitPresentation(Blob blob)</code>
      */
+    @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
 
         if (StringUtils.isBlank(xpath)) {
@@ -265,20 +249,6 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         BlobList blobs = splitPresentation(blob);
 
         return blobs;
-    }
-
-    // ==============================> MERGE
-    @Override
-    public Blob mergeSlides(BlobList slides) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
-    }
-
-    public Blob mergeSlides(DocumentModelList slides) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
     }
 
     // ==============================> Utilities
@@ -294,35 +264,6 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return namesAndMasters;
 
-    }
-
-    /**
-     * @param blob
-     * @since 10.10
-     */
-    public String getBlobMimeType(Blob blob) {
-
-        if (blob == null) {
-            throw new NullPointerException();
-        }
-
-        String mimeType = blob.getMimeType();
-        if (StringUtils.isNotBlank(mimeType)) {
-            return mimeType;
-        }
-
-        MimetypeRegistryService service = (MimetypeRegistryService) Framework.getService(MimetypeRegistry.class);
-        try {
-            mimeType = service.getMimetypeFromBlob(blob);
-        } catch (MimetypeNotFoundException | MimetypeDetectionException e1) {
-            try {
-                mimeType = service.getMimetypeFromFile(blob.getFile());
-            } catch (MimetypeNotFoundException | MimetypeDetectionException e2) {
-                throw new NuxeoException("Cannot get a Mime Type from the blob or the file", e2);
-            }
-        }
-
-        return mimeType;
     }
 
 }
