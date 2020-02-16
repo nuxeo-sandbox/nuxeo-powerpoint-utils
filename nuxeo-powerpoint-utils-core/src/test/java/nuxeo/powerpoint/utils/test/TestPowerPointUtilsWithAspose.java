@@ -47,11 +47,16 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 import com.aspose.slides.Presentation;
 
-import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 
 /**
  * @since 10.10
+ */
+/*
+ * For testing the merge we have 3 presentations (files/merge1.pptx etc.
+ *     The 2 first ones have different slides but the same masters.
+ *     The third one has different master slides
+ * This impacts the test, depending on parameters passed to merge().
  */
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
@@ -146,10 +151,11 @@ public class TestPowerPointUtilsWithAspose {
     }
     
     @Test
-    public void shouldMergePresentations() throws Exception {
+    public void shouldMergePresentationsWithCopyMasterSlides() throws Exception {
         
         BlobList blobs = new BlobList();
         
+        // (See Class comments)
         File fileMerge1 = FileUtils.getResourceFileFromContext("files/merge1.pptx");
         Blob blob1 = new FileBlob(fileMerge1);
         blobs.add(blob1);
@@ -161,11 +167,11 @@ public class TestPowerPointUtilsWithAspose {
         blobs.add(blob3);
         
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
-        Blob resultBlob = pptUtils.merge(blobs, null);
+        Blob resultBlob = pptUtils.merge(blobs, false, null);
         
         assertNotNull(resultBlob);
         
-        //TestUtils.saveBlobOnDesktop(merged, "test-ppt-utils");
+        //TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
         
         // We passed null as fileName => the code should provide the default name
         assertEquals("merged.pptx", resultBlob.getFilename());
@@ -186,11 +192,76 @@ public class TestPowerPointUtilsWithAspose {
         JSONObject resultInfo = pptUtils.getProperties(resultBlob);
         
         // For each presentation the master slides have been copied, even
-        // if all presentations have the same...
-        // SO we must have 4 themes, one for the new Presentation(), then
+        // if all presentations have the same.
+        // So we must have 4 themes, one for the new Presentation(), then
         // one per merged presentation.
         JSONArray resultMasters = resultInfo.getJSONArray("MasterSlides");
         assertEquals(4, resultMasters.length());
+        
+        // Now, check we do have the specific theme stored in merge3.pptx
+        JSONObject merge3Info = pptUtils.getProperties(blob3);
+        JSONArray merge3Masters = merge3Info.getJSONArray("MasterSlides");
+        assertEquals(1, merge3Masters.length());
+        String merge3Theme = merge3Masters.getJSONObject(0).getString("Name");
+        int merge3CountLayouts = merge3Masters.getJSONObject(0).getJSONArray("Layouts").length();
+        
+        boolean found = false;
+        for(int i = 0; i < resultMasters.length(); i++) {
+            JSONObject masterInfo = resultMasters.getJSONObject(i);
+            if(masterInfo.getString("Name").equals(merge3Theme)) {
+                found = true;
+                assertEquals(merge3CountLayouts, masterInfo.getJSONArray("Layouts").length());
+                break;
+            }
+        }
+        assertTrue("Theme form merge3 deck not found in the result", found);
+        
+    }
+    
+    @Test
+    public void shouldMergePresentationsWithReuseMasterSlides() throws Exception {
+        
+        BlobList blobs = new BlobList();
+
+        // (See Class comments)
+        File fileMerge1 = FileUtils.getResourceFileFromContext("files/merge1.pptx");
+        Blob blob1 = new FileBlob(fileMerge1);
+        blobs.add(blob1);
+        File fileMerge2 = FileUtils.getResourceFileFromContext("files/merge2.pptx");
+        Blob blob2 = new FileBlob(fileMerge2);
+        blobs.add(blob2);
+        File fileMerge3 = FileUtils.getResourceFileFromContext("files/merge3.pptx");
+        Blob blob3 = new FileBlob(fileMerge3);
+        blobs.add(blob3);
+        
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
+        Blob resultBlob = pptUtils.merge(blobs, true, null);
+        
+        assertNotNull(resultBlob);
+        
+        //TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
+        
+        // We passed null as fileName => the code should provide the default name
+        assertEquals("merged.pptx", resultBlob.getFilename());
+        
+        // Check slides
+        Presentation src1 = new Presentation(blob1.getStream());
+        Presentation src2 = new Presentation(blob2.getStream());
+        Presentation src3 = new Presentation(blob3.getStream());
+        int countSrcSlides = src1.getSlides().size() + src2.getSlides().size() + src3.getSlides().size();
+        
+        // WARNING - REMINDER
+        // Without a commercial key for using Aspose, it adds a first slide and (c) info to every slide.
+        Presentation resultPres = new Presentation(resultBlob.getStream());
+        int countMergedSlides = resultPres.getSlides().size();
+        assertTrue(countMergedSlides == countSrcSlides || countMergedSlides == (countSrcSlides + 1));
+        
+        
+        JSONObject resultInfo = pptUtils.getProperties(resultBlob);
+        
+        // We reused the master slides. So we must have only 3 themes.
+        JSONArray resultMasters = resultInfo.getJSONArray("MasterSlides");
+        assertEquals(3, resultMasters.length());
         
         // Now, check we do have the specific theme stored in merge3.pptx
         JSONObject merge3Info = pptUtils.getProperties(blob3);

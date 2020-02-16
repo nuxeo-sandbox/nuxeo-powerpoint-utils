@@ -78,8 +78,12 @@ public interface PowerPointUtils {
     
     /**
      * Merge all presentations to a single one, in the received order.
-     * Their own layouts and styles are preserved.
-     * If fileName is null or empty, the file name is set to "merged.pptx"
+     * 
+     * If <code>reuseMasterSlides</code> is <code>false</code>, the own layouts and styles are preserved,
+     * which means the master slides may be duplicated. If <code>true</code>, the code will reuse a master
+     * slide of same theme and same layout already existing in the merged presentation being builtt.
+     * 
+     * If <code>fileName</code> is null or empty, the file name is set to "merged.pptx"
      * Always create a.pptx blob. Adds ".pptx" to fileName if it does not end with .pptx.
      * 
      * If any of these condition applies for any blob in <code>blobs</code> is ignored (no conversion applies).
@@ -88,11 +92,12 @@ public interface PowerPointUtils {
      * If <code>blobs</code> is null or empty, null is returned.
      * 
      * @param blobs
+     * @param reuseMasterSlides
      * @param fileName
      * @return
      * @since 10.10
      */
-    Blob merge(BlobList blobs, String fileName);
+    Blob merge(BlobList blobs, boolean reuseMasterSlides, String fileName);
     
     /**
      * Helper utility getting the mime-type of a blob

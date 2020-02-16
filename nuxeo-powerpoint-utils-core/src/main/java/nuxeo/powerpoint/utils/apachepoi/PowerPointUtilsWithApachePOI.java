@@ -259,7 +259,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     // (complex background, specific font(s), multimedia file(s), ...)
     // Notice that merging can be done using Aspose instead.
     @Override
-    public Blob merge(BlobList blobs, String fileName) {
+    public Blob merge(BlobList blobs, boolean reuseMasterSlides, String fileName) {
         // TODO Auto-generated method stub
         // return null;
         throw new UnsupportedOperationException();

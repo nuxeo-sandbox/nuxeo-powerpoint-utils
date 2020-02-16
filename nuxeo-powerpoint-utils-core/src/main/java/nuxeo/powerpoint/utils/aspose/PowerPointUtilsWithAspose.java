@@ -17,7 +17,12 @@ import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
 import com.aspose.slides.IFontData;
+import com.aspose.slides.ILayoutSlide;
+import com.aspose.slides.IMasterLayoutSlideCollection;
+import com.aspose.slides.IMasterSlide;
+import com.aspose.slides.IMasterSlideCollection;
 import com.aspose.slides.ISlideCollection;
+import com.aspose.slides.MasterLayoutSlideCollection;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
 
@@ -120,20 +125,48 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
     // ==============================> MERGE
     @Override
-    public Blob merge(BlobList blobs, String fileName) {
+    public Blob merge(BlobList blobs, boolean reuseMasterSlides, String fileName) {
 
         Blob result = null;
 
         fileName = PowerPointUtils.checkMergedFileName(fileName);
-        
+
         Presentation destPres = new Presentation();
+        destPres.getMasters().removeUnused(true);
         try {
             for (Blob b : blobs) {
                 Presentation toMerge = new Presentation(b.getStream());
                 if (toMerge != null) {
                     ISlideCollection slidesColl = toMerge.getSlides();
                     slidesColl.forEach(slide -> {
-                        destPres.getSlides().addClone(slide);
+
+                        String slideTheme = slide.getLayoutSlide().getMasterSlide().getName();
+                        String slideLayout = slide.getLayoutSlide().getName();
+
+                        IMasterSlide masterToUse = null;
+                        if (reuseMasterSlides) {
+                            IMasterSlideCollection masterColl = destPres.getMasters();
+                            for (int i = 0; i < masterColl.size(); i++) {
+                                IMasterSlide master = masterColl.get_Item(i);
+                                if (master != null && master.getName() != null && master.getName().equals(slideTheme)) {
+                                    IMasterLayoutSlideCollection layoutMasterColl = master.getLayoutSlides();
+                                    for (int j = 0; j < layoutMasterColl.size(); j++) {
+                                        ILayoutSlide layoutMaster = layoutMasterColl.get_Item(j);
+                                        if (layoutMaster.getName().equals(slideLayout)) {
+                                            masterToUse = master;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (masterToUse == null) {
+                            destPres.getSlides().addClone(slide);
+                        } else {
+                            destPres.getSlides().addClone(slide, masterToUse, true);
+                        }
+
                     });
                 }
             }
