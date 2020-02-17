@@ -45,6 +45,8 @@ import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
+import com.aspose.slides.ILicense;
+import com.aspose.slides.License;
 import com.aspose.slides.Presentation;
 
 import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
@@ -129,7 +131,7 @@ public class TestPowerPointUtilsWithAspose {
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
         JSONObject result = pptUtils.getProperties(testFileBlob);
 
-        System.out.println("\n" + result.toString(2));
+        //System.out.println("\n" + result.toString(2));
 
         // See, in PowerPoint, File > Properties of the test file.
         assertEquals("Nuxeo Unit Testing", result.get("Creator"));
@@ -182,21 +184,18 @@ public class TestPowerPointUtilsWithAspose {
         Presentation src3 = new Presentation(blob3.getStream());
         int countSrcSlides = src1.getSlides().size() + src2.getSlides().size() + src3.getSlides().size();
         
-        // WARNING - REMINDER
-        // Without a commercial key for using Aspose, it adds a first slide and (c) info to every slide.
         Presentation resultPres = new Presentation(resultBlob.getStream());
         int countMergedSlides = resultPres.getSlides().size();
-        assertTrue(countMergedSlides == countSrcSlides || countMergedSlides == (countSrcSlides + 1));
+        assertEquals(countSrcSlides, countMergedSlides);
         
         
         JSONObject resultInfo = pptUtils.getProperties(resultBlob);
         
         // For each presentation the master slides have been copied, even
         // if all presentations have the same.
-        // So we must have 4 themes, one for the new Presentation(), then
-        // one per merged presentation.
+        // So we must have 3 themes.
         JSONArray resultMasters = resultInfo.getJSONArray("MasterSlides");
-        assertEquals(4, resultMasters.length());
+        assertEquals(3, resultMasters.length());
         
         // Now, check we do have the specific theme stored in merge3.pptx
         JSONObject merge3Info = pptUtils.getProperties(blob3);
@@ -239,7 +238,7 @@ public class TestPowerPointUtilsWithAspose {
         
         assertNotNull(resultBlob);
         
-        //TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
+        TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
         
         // We passed null as fileName => the code should provide the default name
         assertEquals("merged.pptx", resultBlob.getFilename());
@@ -250,25 +249,21 @@ public class TestPowerPointUtilsWithAspose {
         Presentation src3 = new Presentation(blob3.getStream());
         int countSrcSlides = src1.getSlides().size() + src2.getSlides().size() + src3.getSlides().size();
         
-        // WARNING - REMINDER
-        // Without a commercial key for using Aspose, it adds a first slide and (c) info to every slide.
         Presentation resultPres = new Presentation(resultBlob.getStream());
         int countMergedSlides = resultPres.getSlides().size();
-        assertTrue(countMergedSlides == countSrcSlides || countMergedSlides == (countSrcSlides + 1));
+        assertEquals(countSrcSlides, countMergedSlides);
         
-        
+        // Perform the assertions from the properties.
         JSONObject resultInfo = pptUtils.getProperties(resultBlob);
         
-        // We reused the master slides. So we must have only 3 themes.
+        // We reused the master slides. So we must have only 2 themes (See Class comments)
         JSONArray resultMasters = resultInfo.getJSONArray("MasterSlides");
-        assertEquals(3, resultMasters.length());
+        assertEquals(2, resultMasters.length());
         
         // Now, check we do have the specific theme stored in merge3.pptx
-        JSONObject merge3Info = pptUtils.getProperties(blob3);
-        JSONArray merge3Masters = merge3Info.getJSONArray("MasterSlides");
-        assertEquals(1, merge3Masters.length());
-        String merge3Theme = merge3Masters.getJSONObject(0).getString("Name");
-        int merge3CountLayouts = merge3Masters.getJSONObject(0).getJSONArray("Layouts").length();
+        // See merge3.pptx, View > Master > Slide Master
+        String merge3Theme = "Test-Theme";
+        int merge3CountLayouts = 2;
         
         boolean found = false;
         for(int i = 0; i < resultMasters.length(); i++) {
@@ -280,7 +275,12 @@ public class TestPowerPointUtilsWithAspose {
             }
         }
         assertTrue("Theme form merge3 deck not found in the result", found);
-        
+                
+    }
+    
+    @Test
+    public void quickTest() throws Exception {
+        // . . .
     }
 
 }

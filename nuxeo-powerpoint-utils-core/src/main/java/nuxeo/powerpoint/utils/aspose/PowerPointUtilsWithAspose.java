@@ -22,6 +22,7 @@ import com.aspose.slides.IMasterLayoutSlideCollection;
 import com.aspose.slides.IMasterSlide;
 import com.aspose.slides.IMasterSlideCollection;
 import com.aspose.slides.ISlideCollection;
+import com.aspose.slides.License;
 import com.aspose.slides.MasterLayoutSlideCollection;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
@@ -125,14 +126,19 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
     // ==============================> MERGE
     @Override
-    public Blob merge(BlobList blobs, boolean reuseMasterSlides, String fileName) {
+    public Blob merge(BlobList blobs, boolean reuseMasters, String fileName) {
 
         Blob result = null;
 
         fileName = PowerPointUtils.checkMergedFileName(fileName);
 
         Presentation destPres = new Presentation();
+        // May create a default slide, we want to start from scratch
+        while (destPres.getSlides().size() > 0) {
+            destPres.getSlides().removeAt(0);
+        }
         destPres.getMasters().removeUnused(true);
+
         try {
             for (Blob b : blobs) {
                 Presentation toMerge = new Presentation(b.getStream());
@@ -143,8 +149,10 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
                         String slideTheme = slide.getLayoutSlide().getMasterSlide().getName();
                         String slideLayout = slide.getLayoutSlide().getName();
 
+                        // TODO: Optimize _if needed_
+                        // Benchmark and check if it would be really better to build/cache the master slides on the flow
                         IMasterSlide masterToUse = null;
-                        if (reuseMasterSlides) {
+                        if (reuseMasters) {
                             IMasterSlideCollection masterColl = destPres.getMasters();
                             for (int i = 0; i < masterColl.size(); i++) {
                                 IMasterSlide master = masterColl.get_Item(i);
