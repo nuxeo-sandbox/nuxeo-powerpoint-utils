@@ -3,13 +3,11 @@ package nuxeo.powerpoint.utils.operations;
 import java.io.IOException;
 
 import org.nuxeo.ecm.automation.core.Constants;
-import org.nuxeo.ecm.automation.core.annotations.Context;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
-import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 
 import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
@@ -23,10 +21,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " input can be a blob of the presentation, or a document. In this case xpath tells the operation which blob to use (file:content by default)")
 public class SplitPresentationOp {
 
-    public static final String ID = "Conversion.SplitPPTOp";
-
-    @Context
-    protected CoreSession session;
+    public static final String ID = "Conversion.SplitPresentation";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;

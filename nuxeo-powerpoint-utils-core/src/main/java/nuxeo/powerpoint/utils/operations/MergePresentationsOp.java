@@ -2,20 +2,14 @@ package nuxeo.powerpoint.utils.operations;
 
 import java.io.IOException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.ecm.automation.core.Constants;
-import org.nuxeo.ecm.automation.core.annotations.Context;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
-import org.nuxeo.ecm.core.api.CoreSession;
-import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
-import org.nuxeo.ecm.core.api.PathRef;
 
-import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 
 /**
@@ -30,10 +24,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " IMPORTANT: This operation uses Aspose (aspose.com), which requires a valid license. Without a license all slides are watermarked.")
 public class MergePresentationsOp {
 
-    public static final String ID = "Conversion.MergePPTOp";
-
-    @Context
-    protected CoreSession session;
+    public static final String ID = "Conversion.MergePowerPoints";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;
