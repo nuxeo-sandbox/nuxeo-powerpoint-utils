@@ -2,6 +2,8 @@
 
 This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split and merge.
 
+[![Build Status](https://qa.nuxeo.org/jenkins/buildStatus/icon?job=Sandbox/sandbox_nuxeo-nuxeo-powerpoint-utils-master)](https://qa.nuxeo.org/jenkins/view/Sandbox/job/Sandbox/job/sandbox_nuxeo-nuxeo-powerpoint-utils-master/)
+
 #### IMPORTANT
 The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without such valid license key, Aspose can only be used for testing and slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing).
 
