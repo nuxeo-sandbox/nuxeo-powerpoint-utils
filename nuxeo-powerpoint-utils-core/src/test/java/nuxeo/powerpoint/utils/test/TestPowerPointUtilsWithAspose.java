@@ -238,7 +238,7 @@ public class TestPowerPointUtilsWithAspose {
         
         assertNotNull(resultBlob);
         
-        TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
+        //TestUtils.saveBlobOnDesktop(resultBlob, "test-ppt-utils");
         
         // We passed null as fileName => the code should provide the default name
         assertEquals("merged.pptx", resultBlob.getFilename());
