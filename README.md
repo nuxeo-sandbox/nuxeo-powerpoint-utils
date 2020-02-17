@@ -3,7 +3,7 @@
 This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split and merge.
 
 #### IMPORTANT
-The plugin uses [Apache POI](https://poi.apache.org) and or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without the licensekey, slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing) and Aspose can only be used for testing.
+The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without such valid license key, Aspose can only be used for testing and slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing).
 
 (See below for more details)
 
@@ -25,7 +25,7 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
 
 #### Conversion.MergePowerPoints
 
-<div style="background-color: lemonchiffon;margin-left:50px;margin-right:50px;font-weight: bold; padding: 10px">WARNING: This operation uses Aspose, it is not possible to use Apache POI for this purpose</div>
+        **WARNING: This operation uses Aspose, it is not possible to use Apache POI for this purpose**
 
 * Label: `PowerPoint: Merge Presentations`
 * Input: `Blobs` or `Documents`
