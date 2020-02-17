@@ -3,13 +3,13 @@
 This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split and merge.
 
 #### IMPORTANT
-Some features are only available using [Aspose Slides](https://products.aspose.com/slides), a third-party tool which requires a valid license. Without the key, slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing).
+The plugin uses [Apache POI](https://poi.apache.org) and or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without the licensekey, slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing) and Aspose can only be used for testing.
 
 (See below for more details)
 
 
 # Usage
-The plugin provides utilities for extracting info, splitting and merging pPowerPoint presentations (for Java developer, see the `PowerPointUtils` interface). These utilities can be used via operations described here.
+The plugin provides utilities for extracting info, splitting and merging PowerPoint presentations (for Java developer, see the `PowerPointUtils` interface). These utilities can be used via operations described here.
 
 #### Conversion.GetPowerPointPresentationProperties
 * Label: `PowerPoint: Get Properties`
@@ -41,7 +41,7 @@ The plugin provides utilities for extracting info, splitting and merging pPowerP
   * `reuseMasters`
     * Boolean, optional
     * If `false`, all the master slides of the source presentations are added to the final, merged ones. This means that if some input presentations use the same masters, they will be duplicated in the resulting, merged presentation.
-    * When `true`, the operation will transfer copy the original master slides only if they don't already exist in the merged presentation.
+    * When `true`, the operation will transfer a copy the original master slides only if they don't already exist in the merged presentation.
     * This is based on the combination _theme name + layout name_.
 * Returns a `Blob`, the presentation merging all the input ones. It always is a `pptx` presentation.
 
@@ -49,7 +49,7 @@ The plugin provides utilities for extracting info, splitting and merging pPowerP
 
 Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used.
 
-**Warning**: If the master slides of the input presentation are "bigs" (contain Hires images, videos, ...), then each slide will be big too. For example, if the size of all the master slides is 40MB and there are 100 slides, each slide will be at least 40MB, which is normal, they also contain the HiRes images, the videos, etc.
+**Warning**: If the master slides of the input presentation are "bigs" (contain HiRes images, videos, ...), then each slide will be big too. For example, if the size of all the master slides is 40MB and there are 100 slides, each slide will be at least 40MB, which is normal, they also contain the HiRes images, the videos, etc.
 
 * Label: `PowerPoint: Split Presentation`
 * Input: `Blob` or `Document`
@@ -65,6 +65,14 @@ Split the input presentation and returns a list of blobs, one per slide. Each sl
 * Returns a `BlobList`, list of `Blobs`. Each blob is a side of the input presentation. It also contains a copy of the master slides
  
 #### Conversion.SetAsposeSlidesLicense
+
+* Label: `Conversion.SetAsposeSlidesLicense`
+* Input: `void`
+* Parameter:
+  * `licensePath`, string _required_.
+    * Path to the license key provided by Aspose
+    * See Aspose's [documentation](https://docs.aspose.com/display/slidesjava/Licensing).
+    * Make sure the license is at a path where Nuxeo can access it (meaning, for example, the "user" used to install Nuxeo can access this document)
 
 # Using Aspose Slides - Limitations of Apache POI
 
