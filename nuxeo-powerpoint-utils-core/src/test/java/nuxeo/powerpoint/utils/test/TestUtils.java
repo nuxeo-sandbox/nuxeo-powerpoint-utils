@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xslf.usermodel.XSLFBackground;
 import org.apache.poi.xslf.usermodel.XSLFComments;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.nuxeo.ecm.core.api.Blob;

@@ -13,6 +13,7 @@ import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
@@ -22,8 +23,6 @@ import com.aspose.slides.IMasterLayoutSlideCollection;
 import com.aspose.slides.IMasterSlide;
 import com.aspose.slides.IMasterSlideCollection;
 import com.aspose.slides.ISlideCollection;
-import com.aspose.slides.License;
-import com.aspose.slides.MasterLayoutSlideCollection;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
 
@@ -189,6 +188,34 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         }
 
         return result;
+    }
+    
+    @Override
+    public Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName) {
+        
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        
+        BlobList blobs = new BlobList();
+        for(DocumentModel doc : docs) {
+            blobs.add((Blob) doc.getPropertyValue(xpath));
+        }
+        
+        return merge(blobs, reuseMasters, fileName);
+    }
+    
+    /**
+     * Register Aspose with a valid license
+     * 
+     * See https://docs.aspose.com/display/slidesjava/Licensing
+     * 
+     * @param pathToLicenseFile
+     * @since 10.10
+     */
+    public static void setLicense(String pathToLicenseFile) {
+        com.aspose.slides.License license = new com.aspose.slides.License();
+        license.setLicense(pathToLicenseFile);
     }
 
 }

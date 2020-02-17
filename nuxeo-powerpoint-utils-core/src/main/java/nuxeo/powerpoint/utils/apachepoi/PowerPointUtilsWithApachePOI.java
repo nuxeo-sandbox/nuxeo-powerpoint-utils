@@ -260,9 +260,14 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     // Notice that merging can be done using Aspose instead.
     @Override
     public Blob merge(BlobList blobs, boolean reuseMasters, String fileName) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new UnsupportedOperationException();
+
+        throw new UnsupportedOperationException("Merging slides is not supported with Apache POI, use Aspose instead.");
+    }
+
+    @Override
+    public Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName) {
+
+        throw new UnsupportedOperationException("Merging slides is not supported with Apache POI, use Aspose instead.");
     }
 
     // ==============================> Utilities

@@ -18,7 +18,9 @@
  */
 package nuxeo.powerpoint.utils.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,8 +47,6 @@ import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
-import com.aspose.slides.ILicense;
-import com.aspose.slides.License;
 import com.aspose.slides.Presentation;
 
 import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;

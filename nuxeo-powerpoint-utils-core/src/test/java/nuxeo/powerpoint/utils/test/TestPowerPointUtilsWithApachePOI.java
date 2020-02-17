@@ -18,7 +18,10 @@
  */
 package nuxeo.powerpoint.utils.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +52,12 @@ import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 
 /**
  * @since 10.10
+ */
+/*
+ * For testing the merge we have 3 presentations (files/merge1.pptx etc.
+ *     The 2 first ones have different slides but the same masters.
+ *     The third one has different master slides
+ * This impacts the test, depending on parameters passed to merge().
  */
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
@@ -102,6 +111,33 @@ public class TestPowerPointUtilsWithApachePOI {
                 }
             }
         }
+    }
+    
+    // As of "today", merging works only with Aspose.
+    @Test
+    public void shouldFailMergingSlides() throws Exception {
+        BlobList blobs = new BlobList();
+        
+        // (See Class comments)
+        File fileMerge1 = FileUtils.getResourceFileFromContext("files/merge1.pptx");
+        Blob blob1 = new FileBlob(fileMerge1);
+        blobs.add(blob1);
+        File fileMerge2 = FileUtils.getResourceFileFromContext("files/merge2.pptx");
+        Blob blob2 = new FileBlob(fileMerge2);
+        blobs.add(blob2);
+        File fileMerge3 = FileUtils.getResourceFileFromContext("files/merge3.pptx");
+        Blob blob3 = new FileBlob(fileMerge3);
+        blobs.add(blob3);
+        
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        try {
+            @SuppressWarnings("unused")
+            Blob result = pptUtils.merge(blobs, false, null);
+            assertFalse("Merging with Apache OI should fail. If working, update documentaiton and this test.", true);
+        } catch (Exception e) {
+            
+        }
+        
     }
 
     @Test

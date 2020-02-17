@@ -22,13 +22,12 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.platform.mimetype.MimetypeDetectionException;
 import org.nuxeo.ecm.platform.mimetype.MimetypeNotFoundException;
@@ -41,7 +40,7 @@ public interface PowerPointUtils {
     public static final String PPTX_MIMETYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
     
     // Use this DateFormat to format the dates in <code>JSONObject getProperties(Blob blob)</code>
-    // For exampple: <code>obj.put("Created", DATE_FORMAT.format(yourPre.getADate()));</code>
+    // For example: <code>obj.put("Created", DATE_FORMAT.format(yourPre.getADate()));</code>
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     /**
@@ -94,10 +93,25 @@ public interface PowerPointUtils {
      * @param blobs
      * @param reuseMasters
      * @param fileName
-     * @return
+     * @return the presentation mergin all the input blobs
      * @since 10.10
      */
     Blob merge(BlobList blobs, boolean reuseMasters, String fileName);
+    
+
+    /**
+     * Extract all the blobs stored in each documents at <code>xpath</xpath> (default to "file:content") and
+     * just calls <code>Blob merge(BlobList blobs, boolean reuseMasters, String fileName);</code>
+     * 
+     * @param docs
+     * @param reuseMasters
+     * @param fileName
+     * @return
+     * @since 10.10
+     */
+    Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName);
+    
+    
     
     /**
      * Helper utility getting the mime-type of a blob
@@ -136,7 +150,7 @@ public interface PowerPointUtils {
      * A default name ("merged.pptx") is provided if fioeName is null or empty.
      * 
      * @param fileName
-     * @return The fileName with the corrcet name/extension 
+     * @return The fileName with the correct name/extension 
      * @since 10.10
      */
     public static String checkMergedFileName(String fileName) {
