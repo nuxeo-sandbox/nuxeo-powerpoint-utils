@@ -19,13 +19,14 @@
 package nuxeo.powerpoint.utils.apachepoi;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,15 +46,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
-import org.nuxeo.ecm.platform.mimetype.MimetypeDetectionException;
-import org.nuxeo.ecm.platform.mimetype.MimetypeNotFoundException;
-import org.nuxeo.ecm.platform.mimetype.interfaces.MimetypeRegistry;
-import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
-import org.nuxeo.runtime.api.Framework;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontList;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontListEntry;
 
@@ -78,10 +75,10 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             Dimension dim = ppt.getPageSize();
             obj.put("Width", dim.width);
             obj.put("Height", dim.height);
-           
+
             obj.put("AutoCompressPictures", ppt.getCTPresentation().getAutoCompressPictures());
             obj.put("CompatMode", ppt.getCTPresentation().getCompatMode());
-            
+
             // ================================== Properties
             POIXMLProperties props = ppt.getProperties();
             CoreProperties coreProps = props.getCoreProperties();
@@ -99,7 +96,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("Revision", coreProps.getRevision());
             obj.put("Subject", coreProps.getSubject());
             obj.put("Title", coreProps.getTitle());
-            
+
             ExtendedProperties extProps = props.getExtendedProperties();
             obj.put("CountCharacters", extProps.getCharacters());
             obj.put("CountHiddenSlides", extProps.getHiddenSlides());
@@ -136,7 +133,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             // Master slides (array of themes, for each them, list of layouts)
             arr = new JSONArray();
             for (XSLFSlideMaster master : ppt.getSlideMasters()) {
-                XSLFTheme  masterThemeObj = master.getTheme();
+                XSLFTheme masterThemeObj = master.getTheme();
                 String masterTheme = masterThemeObj.getName();
                 JSONArray arrLayouts = new JSONArray();
                 for (XSLFSlideLayout layout : master.getSlideLayouts()) {
@@ -160,7 +157,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                 }
             }
             obj.put("EmbeddedFonts", arr);
-            
+
             // Nop easy way to get fonts with Apache POI 3.17
             // TODO: get fonts when switching to a higher version, if available
             arr = new JSONArray();
@@ -253,7 +250,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return blobs;
     }
-    
+
     // ==============================> MERGE
     // Unfortunately, merging with Apache POI is extremely complex as soon as a slide is complex
     // (complex background, specific font(s), multimedia file(s), ...)
@@ -270,7 +267,95 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         throw new UnsupportedOperationException("Merging slides is not supported with Apache POI, use Aspose instead.");
     }
 
-    // ==============================> Utilities
+    // ==============================> THUMBNAILS
+    @Override
+    public BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException {
+
+        BlobList result = new BlobList();
+
+        if (blob == null) {
+            return result;
+        }
+
+        if (StringUtils.isBlank(format)) {
+            format = "png";
+        }
+
+        String mimeType;
+        switch (format.toLowerCase()) {
+        case "jpg":
+        case "jpeg":
+            format = "jpg";
+            mimeType = "image/jpeg";
+            break;
+
+        case "png":
+            mimeType = "image/png";
+            break;
+
+        default:
+            throw new NuxeoException(format + " is no a supported formats (only jpg or png)");
+        }
+
+        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+
+            Dimension pgsize = ppt.getPageSize();
+            int width = pgsize.width;
+            int height = pgsize.height;
+
+            float scale = 1;
+            if (maxWidth > 0 && maxWidth < width) {
+                scale = (float) maxWidth / (float) width;
+                width = maxWidth;
+                height = (int) (height * scale);
+            }
+
+            int i = 0;
+            for (XSLFSlide slide : ppt.getSlides()) {
+
+                if (onlyVisible) {
+                    // TODO This comes from Apache POI 4.n. directly use slide.isHidden() once Nuxeo platform has been
+                    // upgraded
+                    // (and this plugin also upgraded)
+                    if (slide.getXmlObject().isSetShow() && !slide.getXmlObject().getShow()) {
+                        continue;
+                    }
+                }
+
+                // Thanks to Apache example, PPTX2PNG
+                //BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                Graphics2D graphics = img.createGraphics();
+
+                /*
+                graphics.setPaint(Color.white);
+                graphics.fill(new Rectangle2D.Float(0, 0, width, height));
+                */
+
+                // default rendering options
+                graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                        RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+                graphics.scale(scale, scale);
+                slide.draw(graphics);
+
+                Blob b = Blobs.createBlobWithExtension("." + format);
+                javax.imageio.ImageIO.write(img, format, b.getFile());
+                b.setMimeType(mimeType);
+
+                i += 1;
+                b.setFilename("Slide " + i + "." + format);
+                result.add(b);
+            }
+        }
+
+        return result;
+    }
+
+    // ==============================> Specific Apache POI Utilities
     public Map<String, XSLFSlideMaster> getSlideMasters(XMLSlideShow slideShow) {
 
         HashMap<String, XSLFSlideMaster> namesAndMasters = new HashMap<String, XSLFSlideMaster>();

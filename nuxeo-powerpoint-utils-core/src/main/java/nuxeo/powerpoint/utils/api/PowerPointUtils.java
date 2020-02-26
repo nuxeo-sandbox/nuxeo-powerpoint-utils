@@ -36,9 +36,9 @@ import org.nuxeo.ecm.platform.mimetype.service.MimetypeRegistryService;
 import org.nuxeo.runtime.api.Framework;
 
 public interface PowerPointUtils {
-    
+
     public static final String PPTX_MIMETYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-    
+
     // Use this DateFormat to format the dates in <code>JSONObject getProperties(Blob blob)</code>
     // For example: <code>obj.put("Created", DATE_FORMAT.format(yourPre.getADate()));</code>
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -74,20 +74,16 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     BlobList splitPresentation(DocumentModel input, String xpath) throws IOException;
-    
+
     /**
      * Merge all presentations to a single one, in the received order.
-     * 
      * If <code>reuseMasters</code> is <code>false</code>, the slide's layouts and styles are preserved,
      * which means the master slides will be duplicated. If <code>true</code>, the code will reuse a master
      * slide of same theme and same layout already existing in the merged presentation being builtt.
-     * 
      * If <code>fileName</code> is null or empty, the file name is set to "merged.pptx"
      * Always create a.pptx blob. Adds ".pptx" to fileName if it does not end with .pptx.
-     * 
      * If any of these condition applies for any blob in <code>blobs</code> is ignored (no conversion applies).
      * Also, when a blob in <code>blobs</code> has zero slide, it is ignored.
-     * 
      * If <code>blobs</code> is null or empty, null is returned.
      * 
      * @param blobs
@@ -97,7 +93,6 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     Blob merge(BlobList blobs, boolean reuseMasters, String fileName);
-    
 
     /**
      * Extract all the blobs stored in each documents at <code>xpath</xpath> (default to "file:content") and
@@ -110,9 +105,24 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName);
-    
-    
-    
+
+    /**
+     * Returns a list of images, one thumbnail/slide with options:
+     * - A maximum width. If this width is lower than the presentation width, then the height will also be reduced
+     * accordingly. Any value <= 0 means "original SlideDeck size"
+     * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
+     * - onlyVisible: if true, hidden slides will be ignored, no thumbnail will be calculated
+     * 
+     * @param blob, the presentation
+     * @param maxWidth
+     * @param format, "jpg", "jpeg" ot "png" only
+     * @param onlyVisible, if true, no thumbnail will be calculated for hidden slides
+     * @return a list of images in the desired format and size
+     * @throws IOException
+     * @since 10.10
+     */
+    BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException;
+
     /**
      * Helper utility getting the mime-type of a blob
      * 
@@ -143,26 +153,26 @@ public interface PowerPointUtils {
 
         return mimeType;
     }
-    
+
     /**
      * Utility to ensure all providers use the name as stated in the interface.
      * A merged presentation must ends with .pptx. If it is not the case, we add the ".pptx" suffix.
      * A default name ("merged.pptx") is provided if fioeName is null or empty.
      * 
      * @param fileName
-     * @return The fileName with the correct name/extension 
+     * @return The fileName with the correct name/extension
      * @since 10.10
      */
     public static String checkMergedFileName(String fileName) {
-        
-        if(StringUtils.isBlank(fileName)) {
+
+        if (StringUtils.isBlank(fileName)) {
             return "merged.pptx";
         }
-        
-        if(!fileName.toLowerCase().endsWith(".pptx")) {
+
+        if (!fileName.toLowerCase().endsWith(".pptx")) {
             return fileName + ".pptx";
         }
-        
+
         return fileName;
     }
 

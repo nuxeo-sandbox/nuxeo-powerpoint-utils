@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
@@ -44,6 +45,8 @@ import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
+import org.nuxeo.ecm.platform.picture.api.ImageInfo;
+import org.nuxeo.ecm.platform.picture.api.ImagingService;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -55,20 +58,24 @@ import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
  */
 /*
  * For testing the merge we have 3 presentations (files/merge1.pptx etc.
- *     The 2 first ones have different slides but the same masters.
- *     The third one has different master slides
+ * The 2 first ones have different slides but the same masters.
+ * The third one has different master slides
  * This impacts the test, depending on parameters passed to merge().
  */
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy("nuxeo.powerpoint.utils-core")
+@Deploy({ "org.nuxeo.ecm.platform.picture.api", "org.nuxeo.ecm.platform.picture.core",
+        "org.nuxeo.ecm.platform.picture.convert", "org.nuxeo.ecm.platform.tag", "nuxeo.powerpoint.utils-core" })
 public class TestPowerPointUtilsWithApachePOI {
 
     public static final String BIG_PRESENTATION = "files/2020-Nuxeo-Overview-abstract.pptx";
 
     @Inject
     protected CoreSession session;
+
+    @Inject
+    protected ImagingService imagingService;
 
     @Test
     public void shouldSplitABlobPresentation() throws Exception {
@@ -112,12 +119,12 @@ public class TestPowerPointUtilsWithApachePOI {
             }
         }
     }
-    
+
     // As of "today", merging works only with Aspose.
     @Test
     public void shouldFailMergingSlides() throws Exception {
         BlobList blobs = new BlobList();
-        
+
         // (See Class comments)
         File fileMerge1 = FileUtils.getResourceFileFromContext("files/merge1.pptx");
         Blob blob1 = new FileBlob(fileMerge1);
@@ -128,16 +135,16 @@ public class TestPowerPointUtilsWithApachePOI {
         File fileMerge3 = FileUtils.getResourceFileFromContext("files/merge3.pptx");
         Blob blob3 = new FileBlob(fileMerge3);
         blobs.add(blob3);
-        
+
         PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
         try {
             @SuppressWarnings("unused")
             Blob result = pptUtils.merge(blobs, false, null);
             assertFalse("Merging with Apache OI should fail. If working, update documentaiton and this test.", true);
         } catch (Exception e) {
-            
+
         }
-        
+
     }
 
     @Test
@@ -152,25 +159,146 @@ public class TestPowerPointUtilsWithApachePOI {
 
         PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
         JSONObject result = pptUtils.getProperties(testFileBlob);
-        
+
         // See, in PowerPoint, File > Properties of the test file.
         assertEquals("Nuxeo Unit Testing", result.get("Creator"));
         assertEquals("Nuxeo", result.get("Company"));
         assertEquals("Widescreen", result.get("PresentationFormat"));
         assertEquals(11, result.get("CountSlides"));
         assertEquals(1, result.get("CountHiddenSlides"));
-        
+
         JSONArray arr = result.getJSONArray("MasterSlides");
         assertEquals(2, arr.length());
         // First one is "Office Theme"
         JSONObject theme = arr.getJSONObject(0);
-        //getJSONObject does not return null is there is no value, it throws an exception
+        // getJSONObject does not return null is there is no value, it throws an exception
         assertEquals("Office Theme", theme.get("Name"));
         // Could also check the layouts...
-        
+
         // Could also check info on every slides...
-        
-        //System.out.println("\n" + result.toString(2));
+
+        // System.out.println("\n" + result.toString(2));
+    }
+
+    @Test
+    public void testGetThumbnailsWithDefaultValues() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, null, false);
+
+        assertTrue(blobs.size() > 0);
+
+        // For quick tests on your Mac :-)
+        //for (Blob b : blobs) {
+        //    TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
+        //}
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            assertEquals(fullPres.getSlides().size(), blobs.size());
+            Dimension pgsize = fullPres.getPageSize();
+            int w = pgsize.width;
+            int h = pgsize.height;
+
+            for (Blob b : blobs) {
+                assertEquals(b.getMimeType(), "image/png");
+
+                ImageInfo info = imagingService.getImageInfo(b);
+                assertEquals(w, info.getWidth());
+                assertEquals(h, info.getHeight());
+            }
+        }
+    }
+
+    @Test
+    public void testGetThumbnailsIgnoreHidden() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, null, true);
+
+        assertTrue(blobs.size() > 0);
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            // We have one hidden slide in this test file
+            assertEquals(fullPres.getSlides().size() - 1, blobs.size());
+        }
+    }
+
+    @Test
+    public void testGetThumbnailsSmallerThumbnails() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 200, null, false);
+
+        assertTrue(blobs.size() > 0);
+
+        // For quick tests on your Mac :-)
+        // for (Blob b : blobs) {
+        // TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
+        // }
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            assertEquals(fullPres.getSlides().size(), blobs.size());
+
+            for (Blob b : blobs) {
+                assertEquals(b.getMimeType(), "image/png");
+
+                ImageInfo info = imagingService.getImageInfo(b);
+                assertEquals(200, info.getWidth());
+            }
+        }
+    }
+
+    @Test
+    public void testGetThumbnailsAsJpeg() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, "jpg", false);
+
+        assertTrue(blobs.size() > 0);
+
+        // For quick tests on your Mac :-)
+        //for (Blob b : blobs) {
+        //    TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
+        //}
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            assertEquals(fullPres.getSlides().size(), blobs.size());
+            Dimension pgsize = fullPres.getPageSize();
+            int w = pgsize.width;
+            int h = pgsize.height;
+
+            for (Blob b : blobs) {
+                assertEquals(b.getMimeType(), "image/jpeg");
+
+                ImageInfo info = imagingService.getImageInfo(b);
+                assertEquals(w, info.getWidth());
+                assertEquals(h, info.getHeight());
+            }
+        }
     }
 
 }

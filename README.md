@@ -47,7 +47,7 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
     * This is based on the combination _theme name + layout name_.
 * Returns a `Blob`, the presentation merging all the input ones. It always is a `pptx` presentation.
 
-#### Conversion.SplitPresentation
+#### Conversion.SplitPowerPointPresentation
 
 Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used.
 

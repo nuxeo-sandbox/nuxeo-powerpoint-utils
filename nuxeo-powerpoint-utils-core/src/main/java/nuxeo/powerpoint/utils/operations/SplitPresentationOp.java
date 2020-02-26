@@ -21,7 +21,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " input can be a blob of the presentation, or a document. In this case xpath tells the operation which blob to use (file:content by default)")
 public class SplitPresentationOp {
 
-    public static final String ID = "Conversion.SplitPresentation";
+    public static final String ID = "Conversion.SplitPowerPointPresentation";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;

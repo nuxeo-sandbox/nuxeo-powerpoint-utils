@@ -1,5 +1,6 @@
 package nuxeo.powerpoint.utils.aspose;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -22,6 +23,7 @@ import com.aspose.slides.ILayoutSlide;
 import com.aspose.slides.IMasterLayoutSlideCollection;
 import com.aspose.slides.IMasterSlide;
 import com.aspose.slides.IMasterSlideCollection;
+import com.aspose.slides.ISlide;
 import com.aspose.slides.ISlideCollection;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
@@ -203,6 +205,76 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         }
         
         return merge(blobs, reuseMasters, fileName);
+    }
+    
+    // ==============================> THUMBNAILS
+    @Override
+    public BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException {
+
+        BlobList result = new BlobList();
+
+        if (blob == null) {
+            return result;
+        }
+
+        if (StringUtils.isBlank(format)) {
+            format = "png";
+        }
+
+        String mimeType;
+        switch (format.toLowerCase()) {
+        case "jpg":
+        case "jpeg":
+            format = "jpg";
+            mimeType = "image/jpeg";
+            break;
+
+        case "png":
+            mimeType = "image/png";
+            break;
+
+        default:
+            throw new NuxeoException(format + " is no a supported formats (only jpg or png)");
+        }
+        
+        try {
+            Presentation pres = new Presentation(blob.getStream());
+            
+            double width = pres.getSlideSize().getSize().getWidth();
+            double height = pres.getSlideSize().getSize().getHeight();
+
+            float scale = 1;
+            if (maxWidth > 0 && maxWidth < width) {
+                scale = (float) (maxWidth / width);
+                width = maxWidth;
+                height = (int) (height * scale);
+            }
+            
+            int slidesCount = pres.getSlides().size();
+            for (int i = 0; i < slidesCount; i++) {
+
+                ISlide slide = pres.getSlides().get_Item(i);
+                
+                if(onlyVisible && slide.getHidden()) {
+                    continue;
+                }
+                
+                BufferedImage img = slide.getThumbnail(scale, scale);
+                
+                Blob b = Blobs.createBlobWithExtension("." + format);
+                javax.imageio.ImageIO.write(img, format, b.getFile());
+                b.setMimeType(mimeType);
+
+                b.setFilename("Slide " + (i + 1) + "." + format);
+                result.add(b);
+            }
+
+        } catch (IOException e) {
+            throw new NuxeoException("Failed gerenate thumbnails.", e);
+        }
+        
+        return result;
+
     }
     
     /**

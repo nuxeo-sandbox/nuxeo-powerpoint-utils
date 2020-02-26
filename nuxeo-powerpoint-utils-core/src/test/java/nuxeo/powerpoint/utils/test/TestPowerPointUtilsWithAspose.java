@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
@@ -43,6 +44,9 @@ import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
+import org.nuxeo.ecm.platform.picture.api.ImageInfo;
+import org.nuxeo.ecm.platform.picture.api.ImagingService;
+import org.nuxeo.ecm.platform.picture.api.ImageInfo;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -63,13 +67,17 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy("nuxeo.powerpoint.utils-core")
+@Deploy({ "org.nuxeo.ecm.platform.picture.api", "org.nuxeo.ecm.platform.picture.core",
+    "org.nuxeo.ecm.platform.picture.convert", "org.nuxeo.ecm.platform.tag", "nuxeo.powerpoint.utils-core" })
 public class TestPowerPointUtilsWithAspose {
 
     public static final String BIG_PRESENTATION = "files/2020-Nuxeo-Overview-abstract.pptx";
 
     @Inject
     protected CoreSession session;
+
+    @Inject
+    protected ImagingService imagingService;
 
     @Test
     public void shouldSplitABlobPresentation() throws Exception {
@@ -276,6 +284,97 @@ public class TestPowerPointUtilsWithAspose {
         }
         assertTrue("Theme form merge3 deck not found in the result", found);
                 
+    }
+    
+    @Test
+    public void testGetThumbnailsWithDefaultValues() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, null, false);
+
+        assertTrue(blobs.size() > 0);
+
+        // For quick tests on your Mac :-)
+        //for (Blob b : blobs) {
+        //    TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
+        //}
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            assertEquals(fullPres.getSlides().size(), blobs.size());
+            Dimension pgsize = fullPres.getPageSize();
+            int w = pgsize.width;
+            int h = pgsize.height;
+
+            for (Blob b : blobs) {
+                assertEquals(b.getMimeType(), "image/png");
+
+                ImageInfo info = imagingService.getImageInfo(b);
+                assertEquals(w, info.getWidth());
+                assertEquals(h, info.getHeight());
+            }
+        }
+    }
+
+    @Test
+    public void testGetThumbnailsIgnoreHidden() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, null, true);
+
+        assertTrue(blobs.size() > 0);
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            // We have one hidden slide in this test file
+            assertEquals(fullPres.getSlides().size() - 1, blobs.size());
+        }
+        
+    }
+    
+    @Test
+    public void testGetThumbnailsAsJpeg() throws Exception {
+
+        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
+
+        BlobList blobs = pptUtils.getThumbnails(testFileBlob, 0, "jpeg", false);
+
+        assertTrue(blobs.size() > 0);
+
+        // For quick tests on your Mac :-)
+        //for (Blob b : blobs) {
+        //    TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
+        //}
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            assertEquals(fullPres.getSlides().size(), blobs.size());
+            Dimension pgsize = fullPres.getPageSize();
+            int w = pgsize.width;
+            int h = pgsize.height;
+
+            for (Blob b : blobs) {
+                assertEquals(b.getMimeType(), "image/jpeg");
+
+                ImageInfo info = imagingService.getImageInfo(b);
+                assertEquals(w, info.getWidth());
+                assertEquals(h, info.getHeight());
+            }
+        }
     }
     
     @Test
