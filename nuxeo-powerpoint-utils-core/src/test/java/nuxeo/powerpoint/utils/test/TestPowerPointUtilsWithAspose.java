@@ -95,7 +95,7 @@ public class TestPowerPointUtilsWithAspose {
         assertNotNull(blobs);
 
         // For quick tests on your Mac :-)
-        // for (Blob b : blobs) {
+        //for (Blob b : blobs) {
         // TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
         // }
 
@@ -113,7 +113,7 @@ public class TestPowerPointUtilsWithAspose {
                         // Check we have only one
                         // WARNING: If using Aspose in demo mode, we always have a "Built with Aspose slide"
                         int countSlides = oneSlidePres.getSlides().size();
-                        assertTrue(countSlides == 1 || countSlides == 2);
+                        assertTrue(countSlides == 1);
 
                         // Check the slides are the same
                         XSLFSlide originalSlide = allSlides.get(i);

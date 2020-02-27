@@ -95,6 +95,11 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
             for (int i = 0; i < slidesCount; i++) {
 
                 Presentation destPres = new Presentation();
+                // May create a default slide, we want to start from scratch
+                while (destPres.getSlides().size() > 0) {
+                    destPres.getSlides().removeAt(0);
+                }
+                destPres.getMasters().removeUnused(true);
                 ISlideCollection slds = destPres.getSlides();
                 slds.addClone(pres.getSlides().get_Item(i));
 
