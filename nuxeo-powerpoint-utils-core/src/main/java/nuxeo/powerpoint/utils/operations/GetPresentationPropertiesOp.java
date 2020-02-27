@@ -25,7 +25,7 @@ public class GetPresentationPropertiesOp {
     public static final String ID = "Conversion.PowerPointGetProperties";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
-    protected String xpath = "file:sontent";
+    protected String xpath = "file:content";
 
     @Param(name = "useAspose", required = false)
     protected Boolean useAspose = false;
