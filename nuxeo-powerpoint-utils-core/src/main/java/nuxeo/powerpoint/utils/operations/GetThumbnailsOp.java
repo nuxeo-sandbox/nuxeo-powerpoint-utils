@@ -20,10 +20,11 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " format can be \"jpg\" or \"png\"."
         + " maxWidth allows for returning smaller images. Any value <= 0 returns the images in the original dimension."
         + " If onlyVisible is true, thumbnails are returned only for visible slides."
-        + " useAspose tells the operaiton to use Aspose for the rendition. Default is Apache POI. Slides rendered with Aspose have a better quality.")
+        + " useAspose tells the operation to use Aspose for the rendition. Default is Apache POI. Slides rendered with Aspose usually have a better quality."
+        + " Each blob will be named {original-file-name}-{slideNumber + 1}.{format}. SO even if slideNumber is zeroBased, output will start at 1 for better end user experience.")
 public class GetThumbnailsOp {
 
-    public static final String ID = "Conversion.GetPowerPointThumbnails";
+    public static final String ID = "Conversion.PowerPointGetThumbnails";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;

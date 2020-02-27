@@ -64,7 +64,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
     }
 
-    // ==============================> PROPERTIES
+    // ============================================================
+    // PROPERTIES
+    // ============================================================
     @Override
     public JSONObject getProperties(Blob blob) {
 
@@ -169,7 +171,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         return obj;
     }
 
-    // ==============================> SPLIT
+    // ============================================================
+    // SPLIT
+    // ============================================================
     /*
      * <b>IMPORTANT</b>
      * See {@link #getSlide()} for limitation and potential slowness. Basically, for each slide, we delete all the other
@@ -208,7 +212,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         return blobs;
     }
 
-    // ==============================> MERGE
+    // ============================================================
+    // MERGE
+    // ============================================================
     // Unfortunately, merging with Apache POI is extremely complex as soon as a slide is complex
     // (complex background, specific font(s), multimedia file(s), ...)
     // Notice that merging can be done using Aspose instead.
@@ -224,7 +230,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         throw new UnsupportedOperationException("Merging slides is not supported with Apache POI, use Aspose instead.");
     }
 
-    // ==============================> GET SLIDE
+    // ============================================================
+    // GET SLIDE
+    // ============================================================
     /*
      * As of today (Apache POI 4.1.1, January 2020), it is very very difficult to extract a slide. There is no API for
      * this. Getting the master, the layout, getting the related/embedded images, graphs etc. is super cumbersome, and
@@ -291,20 +299,104 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         return result;
 
     }
-    
+
     public Blob getSlide(DocumentModel input, String xpath, int slideNumber) throws IOException {
-        
+
         return getSlide(PowerPointUtils.getBlob(input, xpath), slideNumber);
     }
 
-    // ==============================> THUMBNAILS
+    // ============================================================
+    // THUMBNAILS
+    // ============================================================
     @Override
     public BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException {
 
         BlobList result = new BlobList();
 
         if (blob == null) {
+            return null;
+        }
+
+        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+            for (XSLFSlide slide : ppt.getSlides()) {
+
+                if (onlyVisible) {
+                    // TODO This comes from Apache POI 4.n. directly use slide.isHidden() once Nuxeo platform has been
+                    // upgraded
+                    // (and this plugin also upgraded)
+                    if (slide.getXmlObject().isSetShow() && !slide.getXmlObject().getShow()) {
+                        continue;
+                    }
+                }
+
+                Blob thumb = getThumbnail(slide, maxWidth, format);
+                result.add(thumb);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
+            throws IOException {
+
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        Blob blob = (Blob) doc.getPropertyValue(xpath);
+        BlobList blobs = getThumbnails(blob, maxWidth, format, onlyVisible);
+
+        return blobs;
+    }
+
+    @Override
+    public Blob getThumbnail(Blob blob, int slideNumber, int maxWidth, String format) throws IOException {
+        Blob result = null;
+
+        if (blob == null) {
             return result;
+        }
+        
+        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+            result = getThumbnail(ppt.getSlides().get(slideNumber), maxWidth, format);
+        }
+        
+        return result;
+    }
+
+    @Override
+    public Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format) throws IOException {
+        
+        return getThumbnail(PowerPointUtils.getBlob(doc, xpath), slideNumber, maxWidth, format);
+    }
+
+    // ============================================================
+    // OTHERS
+    // ============================================================
+    public Map<String, XSLFSlideMaster> getSlideMasters(XMLSlideShow slideShow) {
+
+        HashMap<String, XSLFSlideMaster> namesAndMasters = new HashMap<String, XSLFSlideMaster>();
+        for (XSLFSlideMaster master : slideShow.getSlideMasters()) {
+            for (XSLFSlideLayout layout : master.getSlideLayouts()) {
+
+                namesAndMasters.put(layout.getName(), master);
+            }
+        }
+
+        return namesAndMasters;
+
+    }
+
+    // ============================================================
+    // PROTECTED AND SPECIFICS
+    // ============================================================
+    protected Blob getThumbnail(XSLFSlide slide, int maxWidth, String format) throws IOException {
+
+        Blob result = null;
+
+        if (slide == null) {
+            return null;
         }
 
         if (StringUtils.isBlank(format)) {
@@ -327,90 +419,43 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             throw new NuxeoException(format + " is no a supported formats (only jpg or png)");
         }
 
-        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+        Dimension pgsize = slide.getSlideShow().getPageSize();
+        int width = pgsize.width;
+        int height = pgsize.height;
 
-            Dimension pgsize = ppt.getPageSize();
-            int width = pgsize.width;
-            int height = pgsize.height;
-
-            float scale = 1;
-            if (maxWidth > 0 && maxWidth < width) {
-                scale = (float) maxWidth / (float) width;
-                width = maxWidth;
-                height = (int) (height * scale);
-            }
-
-            int i = 0;
-            for (XSLFSlide slide : ppt.getSlides()) {
-
-                if (onlyVisible) {
-                    // TODO This comes from Apache POI 4.n. directly use slide.isHidden() once Nuxeo platform has been
-                    // upgraded
-                    // (and this plugin also upgraded)
-                    if (slide.getXmlObject().isSetShow() && !slide.getXmlObject().getShow()) {
-                        continue;
-                    }
-                }
-
-                // Thanks to Apache example, PPTX2PNG
-                // BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-                Graphics2D graphics = img.createGraphics();
-
-                /*
-                 * graphics.setPaint(Color.white);
-                 * graphics.fill(new Rectangle2D.Float(0, 0, width, height));
-                 */
-
-                // default rendering options
-                graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                        RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-
-                graphics.scale(scale, scale);
-                slide.draw(graphics);
-
-                Blob b = Blobs.createBlobWithExtension("." + format);
-                javax.imageio.ImageIO.write(img, format, b.getFile());
-                b.setMimeType(mimeType);
-
-                i += 1;
-                b.setFilename("Slide " + i + "." + format);
-                result.add(b);
-            }
+        float scale = 1;
+        if (maxWidth > 0 && maxWidth < width) {
+            scale = (float) maxWidth / (float) width;
+            width = maxWidth;
+            height = (int) (height * scale);
         }
+        
+        // Thanks to Apache example, PPTX2PNG
+        // BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = img.createGraphics();
+
+        /*
+         * graphics.setPaint(Color.white);
+         * graphics.fill(new Rectangle2D.Float(0, 0, width, height));
+         */
+
+        // default rendering options
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+        graphics.scale(scale, scale);
+        slide.draw(graphics);
+
+        result = Blobs.createBlobWithExtension("." + format);
+        javax.imageio.ImageIO.write(img, format, result.getFile());
+        result.setMimeType(mimeType);
+        // getSlideNumber() returns a number starting at 1 (as expected by a user)
+        result.setFilename("Slide " + slide.getSlideNumber() + "." + format);
 
         return result;
-    }
-
-    @Override
-    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
-            throws IOException {
-
-        if (StringUtils.isBlank(xpath)) {
-            xpath = "file:content";
-        }
-        Blob blob = (Blob) doc.getPropertyValue(xpath);
-        BlobList blobs = getThumbnails(blob, maxWidth, format, onlyVisible);
-
-        return blobs;
-    }
-
-    // ==============================> Specific Apache POI Utilities
-    public Map<String, XSLFSlideMaster> getSlideMasters(XMLSlideShow slideShow) {
-
-        HashMap<String, XSLFSlideMaster> namesAndMasters = new HashMap<String, XSLFSlideMaster>();
-        for (XSLFSlideMaster master : slideShow.getSlideMasters()) {
-            for (XSLFSlideLayout layout : master.getSlideLayouts()) {
-
-                namesAndMasters.put(layout.getName(), master);
-            }
-        }
-
-        return namesAndMasters;
-
     }
 
 }

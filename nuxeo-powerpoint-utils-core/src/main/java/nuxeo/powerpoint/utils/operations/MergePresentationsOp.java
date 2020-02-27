@@ -24,7 +24,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " IMPORTANT: This operation uses Aspose (aspose.com), which requires a valid license. Without a license all slides are watermarked.")
 public class MergePresentationsOp {
 
-    public static final String ID = "Conversion.MergePowerPoints";
+    public static final String ID = "Conversion.PowerPointMerge";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;

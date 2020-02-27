@@ -9,13 +9,30 @@ The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](http
 
 (See below for more details)
 
+# Table of Content
+- [Usage](#usage)
+  * [Conversion.PowerPointGetProperties](#conversion.powerpointgetproperties)
+  * [Conversion.PowerPointMerge](#conversion.powerpointmerge)
+  * [Conversion.PowerPointSplit](#conversion.powerpointsplit)
+  * [Conversion.PowerPointGetSlide](#conversion.powerpointgetslide)
+  * [Conversion.PowerPointGetThumbnails](#conversion.powerpointgetthumbnails)
+  * [Conversion.PowerPointGetOneThumbnail](#conversion.powerpointgetonethumbnail)
+  * [Conversion.SetAsposeSlidesLicense](#conversion.setasposeslideslicense)
+- [Apache POI vs Aspose](#apache-poi-vs-aspose)
+- [Example of Properties Output](#example-of-properties-output)
+- [Build](#build)
+- [Support](#support)
+- [Licensing](#licensing)
+- [About Nuxeo](#about-nuxeo)
+
 
 # Usage
 The plugin provides utilities for extracting info, splitting and merging PowerPoint presentations (for Java developer, see the `PowerPointUtils` interface). These utilities can be used via operations described here.
 
-#### Conversion.GetPowerPointPresentationProperties
+#### Conversion.PowerPointGetProperties
 * Label: `PowerPoint: Get Properties`
 * Input: `Blob` or `Document`
+* Output: `String`
 * Parameters:
   * `xpath`:
     * String, optional
@@ -25,12 +42,15 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
     * When using Aspose, more information can be returned, like the list of fonts used in the presentation.
 * Return a JSON string containing the properties. See below "Example of Properties Output"
 
-#### Conversion.MergePowerPoints
 
-        **WARNING: This operation uses Aspose, it is not possible to use Apache POI for this purpose**
+
+#### Conversion.PowerPointMerge
+
+        **WARNING: This operation uses Aspose only, it is not possible to use Apache POI for this purpose**
 
 * Label: `PowerPoint: Merge Presentations`
 * Input: `Blobs` or `Documents`
+* Output: `Blob`
 * Parameters:
   * `xpath`:
     * String, optional
@@ -47,7 +67,9 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
     * This is based on the combination _theme name + layout name_.
 * Returns a `Blob`, the presentation merging all the input ones. It always is a `pptx` presentation.
 
-#### Conversion.SplitPowerPointPresentation
+
+
+#### Conversion.PowerPointSplit
 
 Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used. For each blob, the file name is: `{original presentation name}-{slideNumberStartAt1}.pptx` (starts at 1, not zero, so there is less confusion for an end user)
 
@@ -55,32 +77,123 @@ Split the input presentation and returns a list of blobs, one per slide. Each sl
 
 * Label: `PowerPoint: Split Presentation`
 * Input: `Blob` or `Document`
+* Output: `BlobList`
 * Parameters:
   * `xpath`:
     * String, optional
     * Used only if input is a `Document`. `xpath` is the field to use
     * Default value is `"file:content"`
   * `useAspose`
-    * If `false`, the code will make use of Apache POI to split the presentation.
+    * boolean, optional
+    * If `false` (default value), the code will make use of Apache POI to split the presentation.
     * **WARNING** On this case, splitting the presentation can be slow. For big presentation (dozens of complex slides), we recommend running it asynchronously if it was launched by a user in the UI. With Nuxeo Automation, it is possible to handle the business logic and then send a mail notification once the split is done.
     * If `true`, the operation will use Aspose to split the slides. This is done very quickly. This requires a valide Aspose license
 * Returns a `BlobList`, list of `Blobs`. Each blob is a side of the input presentation. It also contains a copy of the master slides
- 
+
+
+
+#### Conversion.PowerPointGetSlide
+Return a `Blob`, single slide presentation, copy of the slide passed in the `slideNumber` parameter. The master slides always are copied to the returned presentation.
+
+The result blob's file name is `{original presentation name}-{slideNumberStartAt1}.pptx"`. So, even if `slideNumber` is zero-based, the file name is 1-based. This is done to avoid having users wondering why they requested slide 4 and got it, but named "my Presentation-3.pptx"
+
+* Label: `PowerPoint: Get Slide`
+* Input: `Blob` or `Document`
+* Output: `Blob`
+* Parameters:
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `slideNumber`
+  	* Integer, _required_
+     The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
+  * `useAspose`
+    * boolean, optional
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Aspose generates, usually, smaller slides with the same quality.
+* Returns a `Blob`, a powerpoint presentation with the single slide
+    
+
+#### Conversion.PowerPointGetThumbnails
+
+Return a `BlobList` of thumbnails, one/slide, as PNG of JPEG, in the original slide dimensions or with a scale factor. It is possible to return only the visible slides.
+
+* Label: `PowerPoint: Get Thumbnails`
+* Input: `Blob` or `Document`
+* Output: `BlobList`
+* Parameters:
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `maxWidth`
+    * integer, optional
+    * Allows for returning smaller images.
+    * Any value <= 0 returns the images in the original dimension
+  * `onlyVisible`
+    * Bolean, optional
+    * If `true`, thumbnails are returned only for visible slides.
+  * `format`
+    * String, optional, default is "png"
+    * Can be only can be "jpg" or "png"
+  * `useAspose`
+    * boolean, optional
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Slides rendered with Aspose usually have a better quality.
+* Returns a `BlobList` of images, one per slide, in the desired size and format. Each image will have the name `{original-file-name}-{slideNumberStartAt1}.{format}` (slide numbers in the output start at 1 to avoid confusion for an end user)
+
+
+#### Conversion.PowerPointGetOneThumbnail
+
+Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide dimensions or with a scale factor.
+
+* Label: `PowerPoint: Get a Thumbnail`
+* Input: `Blob` or `Document`
+* Output: `Blob`
+* Parameters:
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `slideNumber`
+  	* Integer, _required_
+     The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
+  * `maxWidth`
+    * integer, optional
+    * Allows for returning smaller images.
+    * Any value <= 0 returns the images in the original dimension
+  * `format`
+    * String, optional, default is "png"
+    * Can be only can be "jpg" or "png"
+  * `useAspose`
+    * boolean, optional
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Slides rendered with Aspose usually have a better quality.
+* Returns a `Blob`n an image rendition of teh slide, in the desired size and format. The file name is `{original-file-name}-{slideNumberStartAt1}.{format}` **WARNING** When you request slide 3 (0-based) the output will be `... -4 ...`.
+
+
+
 #### Conversion.SetAsposeSlidesLicense
 
 * Label: `Conversion.SetAsposeSlidesLicense`
 * Input: `void`
+* Output: `void`
 * Parameter:
   * `licensePath`, string _required_.
     * Path to the license key provided by Aspose
     * See Aspose's [documentation](https://docs.aspose.com/display/slidesjava/Licensing).
     * Make sure the license is at a path where Nuxeo can access it (meaning, for example, the "user" used to install Nuxeo can access this document)
 
-# Using Aspose Slides - Limitations of Apache POI
 
-In order to merge slides or to quickly and more efficiently split them, we recommend using Aspose, which requires a [valid license](https://docs.aspose.com/display/slidesjava/Licensing):
 
-* **[Apache POI](https://poi.apache.org)** has a [business friendly license](https://poi.apache.org/legal.html) (Apache License Version 2.0) but does not provide easy ways to split and merge slides. Splitting is very slow (still, working). Merging is not implemented at all, if you need to merge slides using this plugin, you _must_ use Aspose.
+# Apache POI vs Aspose
+
+In both case we would like to issue a **WARNING**: As the plugin is using these external libraries, we will not be able to easily fix bugs in these libraries. Typical examples are the operations extracting thumbnails: Images can be different than the original slides, depending on the complexity of the slide, the rendering can fail in some area (typically rendering the fonts, for example).
+
+The most efficient in terms of rendering and spliing is Aspose, which requires a [valid license](https://docs.aspose.com/display/slidesjava/Licensing):
+
+* **[Apache POI](https://poi.apache.org)** has a [business friendly license](https://poi.apache.org/legal.html) (Apache License Version 2.0) but does not provide easy ways to split and merge slides. Splitting is very slow (still, working). Merging is not implemented at all, if you need to merge slides using this plugin, you _must_ use Aspose.<br/>Also, Apache POI is less performant rendering slide(s) to thumbnail(s)
 
 
 * **[Aspose Slides](https://products.aspose.com/slides)**, on the other hand, is a commercial product specialized in handling PowerPoint slides, and, as such, it provides very efficient and fast ways to split, merge etc. Ti use Aspose and avoid Watermarks on slides, you must register a valid license key file using the `Conversion.SetAsposeSlidesLicense` operation

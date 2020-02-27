@@ -47,8 +47,8 @@ public interface PowerPointUtils {
      * Returns a JSONObject with the presentation properties.
      * TODO: Use an interface, maybe, to harmonize the values when we add different providers (Apache POI, Aspose, ...)
      * 
-     * @param blob
-     * @return
+     * @param blob, the PowerPoint presentation
+     * @return a JSON object with a list of properties
      * @since 10.10
      */
     JSONObject getProperties(Blob blob);
@@ -88,7 +88,7 @@ public interface PowerPointUtils {
      * Also, when a blob in <code>blobs</code> has zero slide, it is ignored.
      * If <code>blobs</code> is null or empty, null is returned.
      * 
-     * @param blobs
+     * @param blobs, the PowerPoint presentations
      * @param reuseMasters
      * @param fileName
      * @return the presentation mergin all the input blobs
@@ -100,7 +100,8 @@ public interface PowerPointUtils {
      * Extract all the blobs stored in each documents at <code>xpath</xpath> (default to "file:content") and
      * just calls <code>Blob merge(BlobList blobs, boolean reuseMasters, String fileName);</code>
      * 
-     * @param docs
+     * @param docs, holding the PowerPoint presentations
+     * @param xpath, the field storing the presentation. Optional, "file:content" by default
      * @param reuseMasters
      * @param fileName
      * @return
@@ -114,7 +115,7 @@ public interface PowerPointUtils {
      * The name of the file will be "{original-filename-}{slideNumber + 1}.pptx
      * ... so it is not necessary to re-process the titles for end users
      * 
-     * @param blob, the presentation
+     * @param blob, the PowerPoint presentation
      * @param slideNumber, zero-based
      * @return a presentation containing only the slide.
      * @throws IOException
@@ -144,10 +145,11 @@ public interface PowerPointUtils {
      * accordingly. Any value <= 0 means "original SlideDeck size"
      * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
      * - onlyVisible: if true, hidden slides will be ignored, no thumbnail will be calculated
+     * Each blob's file name is "Slide {slideNumber}.pptx". Number starts at 1 (for better end user experience)
      * 
      * @param blob, the presentation
      * @param maxWidth
-     * @param format, "jpg", "jpeg" ot "png" only
+     * @param format, "jpg", "jpeg" or "png" only
      * @param onlyVisible, if true, no thumbnail will be calculated for hidden slides
      * @return a list of images in the desired format and size
      * @throws IOException
@@ -162,6 +164,7 @@ public interface PowerPointUtils {
      * accordingly. Any value <= 0 means "original SlideDeck size"
      * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
      * - onlyVisible: if true, hidden slides will be ignored, no thumbnail will be calculated
+     * Each blob's file name is "Slide {slideNumber}.pptx". Number starts at 1 (for better end user experience)
      * 
      * @param doc, document holging the presentation
      * @param xpath, the field to use (default to "file:content")
@@ -175,7 +178,39 @@ public interface PowerPointUtils {
     BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
             throws IOException;
 
-    // Blob getThumbnail(Blob blob, int maxWidth, String format);
+    /**
+     * Return the thumbnail of one slide inside the presentation stored in blob, with these parameters:
+     * - slideNumber: a zero-based value. But the file name will be... "Slide {slideNumber + 1}.pptx"
+     * (number starts at 1 for better end user experience)
+     * - maxWidth: A maximum width. If this width is lower than the presentation width, then the height will also be
+     * reduced accordingly. Any value <= 0 means "original SlideDeck size"
+     * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
+     * 
+     * @param blob, the PowerPoint presentation
+     * @param maxWidth
+     * @param format, "jpg", "jpeg" or "png" only
+     * @return the thumbnail
+     * @since 10.10
+     */
+    Blob getThumbnail(Blob blob, int slideNumber, int maxWidth, String format) throws IOException;
+
+    /**
+     * Return the thumbnail of one slide inside the presentation stored in the document at xpath (if null or empty,
+     * defaults to "file:content"), with these parameters:
+     * - slideNumber: a zero-based value. But the file name will be... "Slide {slideNumber + 1}.pptx"
+     * (number starts at 1 for better end user experience)
+     * - maxWidth: A maximum width. If this width is lower than the presentation width, then the height will also be
+     * reduced accordingly. Any value <= 0 means "original SlideDeck size"
+     * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
+     * Fetches the
+     * 
+     * @param blob, the PowerPoint presentation
+     * @param maxWidth
+     * @param format, "jpg", "jpeg" or "png" only
+     * @return the thumbnail
+     * @since 10.10
+     */
+    Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format) throws IOException;
 
     /**
      * Helper utility getting the mime-type of a blob
@@ -229,7 +264,7 @@ public interface PowerPointUtils {
 
         return fileName;
     }
-    
+
     /**
      * Centralizing code repeated in a lot of places, to get "file:content" if no xpath is provided
      * 
@@ -239,7 +274,7 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     public static Blob getBlob(DocumentModel doc, String xpath) {
-        
+
         if (StringUtils.isBlank(xpath)) {
             xpath = "file:content";
         }

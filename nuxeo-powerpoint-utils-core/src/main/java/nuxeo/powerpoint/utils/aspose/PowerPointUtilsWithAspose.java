@@ -30,7 +30,9 @@ import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
 public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
-    // ==============================> PROPERTIES
+    // ============================================================
+    // PROPERTIES
+    // ============================================================
     /*
      * ApachePOI actually can get more info than Aspose, especially in the statistics part
      * (number of words, f paragraphs, ...), as displayed to a user when using PowerPoint.
@@ -67,6 +69,9 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         return obj;
     }
 
+    // ============================================================
+    // SPLIT
+    // ============================================================
     @Override
     public BlobList splitPresentation(Blob blob) throws IOException {
 
@@ -93,7 +98,6 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         return result;
     }
 
-    // ==============================> SPLIT
     @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
 
@@ -102,7 +106,9 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         return blobs;
     }
 
-    // ==============================> MERGE
+    // ============================================================
+    // MERGE
+    // ============================================================
     @Override
     public Blob merge(BlobList blobs, boolean reuseMasters, String fileName) {
 
@@ -184,16 +190,17 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         return merge(blobs, reuseMasters, fileName);
     }
 
-    // ==============================> GET SLIDE
+    // ============================================================
+    // GET SLIDE
+    // ============================================================
     /*
      * Please see comment for splitPresentation() regarding Apache POI (need to duplicate the presentation
      * and delete all other slides)
-     * 
      * Also check the interface : slideNumber is
      */
     @Override
     public Blob getSlide(Blob blob, int slideNumber) throws IOException {
-        
+
         Blob result = null;
 
         if (blob == null) {
@@ -201,10 +208,10 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         }
 
         String pptMimeType = PowerPointUtils.getBlobMimeType(blob);
-        
+
         try {
             Presentation pres = new Presentation(blob.getStream());
-            
+
             Presentation destPres = new Presentation();
             // May create a default slide, we want to start from scratch
             while (destPres.getSlides().size() > 0) {
@@ -212,12 +219,12 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
             }
             destPres.getMasters().removeUnused(true);
             ISlideCollection slds = destPres.getSlides();
-            
+
             slds.addClone(pres.getSlides().get_Item(slideNumber));
 
             result = Blobs.createBlobWithExtension(".pptx");
             destPres.save(result.getFile().getAbsolutePath(), SaveFormat.Pptx);
-            
+
             // Update blob info
             result.setMimeType(pptMimeType);
             String fileNameBase = blob.getFilename();
@@ -225,30 +232,119 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
             fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
             // See interface: the file name must be 1-based, not zero-based
             result.setFilename(fileNameBase + (slideNumber + 1) + ".pptx");
-            
+
         } catch (IOException e) {
             throw new NuxeoException("Failed to get slide #" + (slideNumber - 1), e);
         }
-        
-        
+
         return result;
     }
-    
+
     public Blob getSlide(DocumentModel input, String xpath, int slideNumber) throws IOException {
-        
+
         return getSlide(PowerPointUtils.getBlob(input, xpath), slideNumber);
     }
 
-    // ==============================> THUMBNAILS
+    // ============================================================
+    // THUMBNAILS
+    // ============================================================
     @Override
     public BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException {
-
+        
         BlobList result = new BlobList();
 
         if (blob == null) {
             return result;
         }
 
+        try {
+            Presentation pres = new Presentation(blob.getStream());
+            int slidesCount = pres.getSlides().size();
+            for (int i = 0; i < slidesCount; i++) {
+                ISlide slide = pres.getSlides().get_Item(i);
+                if (onlyVisible && slide.getHidden()) {
+                    continue;
+                }
+                
+                Blob thumb = getThumbnail(slide, maxWidth, format);
+                result.add(thumb);
+            }
+
+        } catch (IOException e) {
+            throw new NuxeoException("Failed gerenate thumbnails.", e);
+        }
+
+        return result;
+
+    }
+
+    @Override
+    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
+            throws IOException {
+
+        BlobList blobs = getThumbnails(PowerPointUtils.getBlob(doc, xpath), maxWidth, format, onlyVisible);
+
+        return blobs;
+    }
+
+    @Override
+    public Blob getThumbnail(Blob blob, int slideNumber, int maxWidth, String format) throws IOException {
+
+        Blob result = null;
+
+        if (blob == null) {
+            return result;
+        }
+        
+        try {
+            Presentation pres = new Presentation(blob.getStream());
+            ISlide slide = pres.getSlides().get_Item(slideNumber);
+            result = getThumbnail(slide, maxWidth, format);
+            
+        } catch (IOException e) {
+            throw new NuxeoException("Failed gerenate thumbnails.", e);
+        }
+        
+        return result;
+        
+    }
+
+    @Override
+    public Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format) throws IOException {
+        
+        return getThumbnail(PowerPointUtils.getBlob(doc, xpath), slideNumber, maxWidth, format);
+    }
+
+    // ============================================================
+    // OTHERS
+    // ============================================================
+    /**
+     * Register Aspose with a valid license
+     * See https://docs.aspose.com/display/slidesjava/Licensing
+     * 
+     * @param pathToLicenseFile
+     * @since 10.10
+     */
+    public static void setLicense(String pathToLicenseFile) {
+        com.aspose.slides.License license = new com.aspose.slides.License();
+        license.setLicense(pathToLicenseFile);
+    }
+    
+
+    // ============================================================
+    // Protected and specifics
+    // ============================================================
+    /*
+     * Centralize getting a thnumbail once we have a slide
+     */
+    protected Blob getThumbnail(ISlide slide, int maxWidth, String format) throws IOException {
+        
+        Blob result = null;
+
+        if (slide == null) {
+            return result;
+        }
+        
         if (StringUtils.isBlank(format)) {
             format = "png";
         }
@@ -268,70 +364,26 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         default:
             throw new NuxeoException(format + " is no a supported formats (only jpg or png)");
         }
-
-        try {
-            Presentation pres = new Presentation(blob.getStream());
-
-            double width = pres.getSlideSize().getSize().getWidth();
-            double height = pres.getSlideSize().getSize().getHeight();
-
-            float scale = 1;
-            if (maxWidth > 0 && maxWidth < width) {
-                scale = (float) (maxWidth / width);
-                width = maxWidth;
-                height = (int) (height * scale);
-            }
-
-            int slidesCount = pres.getSlides().size();
-            for (int i = 0; i < slidesCount; i++) {
-
-                ISlide slide = pres.getSlides().get_Item(i);
-
-                if (onlyVisible && slide.getHidden()) {
-                    continue;
-                }
-
-                BufferedImage img = slide.getThumbnail(scale, scale);
-
-                Blob b = Blobs.createBlobWithExtension("." + format);
-                javax.imageio.ImageIO.write(img, format, b.getFile());
-                b.setMimeType(mimeType);
-
-                b.setFilename("Slide " + (i + 1) + "." + format);
-                result.add(b);
-            }
-
-        } catch (IOException e) {
-            throw new NuxeoException("Failed gerenate thumbnails.", e);
+        
+        double width = slide.getPresentation().getSlideSize().getSize().getWidth();
+        double height = slide.getPresentation().getSlideSize().getSize().getHeight();
+        
+        float scale = 1;
+        if (maxWidth > 0 && maxWidth < width) {
+            scale = (float) (maxWidth / width);
+            width = maxWidth;
+            height = (int) (height * scale);
         }
+        
+        BufferedImage img = slide.getThumbnail(scale, scale);
 
+        result = Blobs.createBlobWithExtension("." + format);
+        javax.imageio.ImageIO.write(img, format, result.getFile());
+        result.setMimeType(mimeType);
+        // With Aspose, getSlideNumber() starts at 1, no need to (slide.getSlideNumber() + 1)
+        result.setFilename("Slide " + slide.getSlideNumber() + "." + format);
+        
         return result;
-
-    }
-
-    @Override
-    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
-            throws IOException {
-
-        if (StringUtils.isBlank(xpath)) {
-            xpath = "file:content";
-        }
-        Blob blob = (Blob) doc.getPropertyValue(xpath);
-        BlobList blobs = getThumbnails(blob, maxWidth, format, onlyVisible);
-
-        return blobs;
-    }
-
-    /**
-     * Register Aspose with a valid license
-     * See https://docs.aspose.com/display/slidesjava/Licensing
-     * 
-     * @param pathToLicenseFile
-     * @since 10.10
-     */
-    public static void setLicense(String pathToLicenseFile) {
-        com.aspose.slides.License license = new com.aspose.slides.License();
-        license.setLicense(pathToLicenseFile);
     }
 
 }

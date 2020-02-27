@@ -307,5 +307,53 @@ public class TestPowerPointUtilsWithApachePOI {
             }
         }
     }
+    
+    @Test
+    public void testGetOneThumbnailWithDefaultParameters() throws Exception {
+        
+        int SLIDE_NUMBER = 4;
+
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        Blob result = pptUtils.getThumbnail(testFileBlob, SLIDE_NUMBER, 0, null);
+
+        assertNotNull(result);
+        // Default is png
+        assertEquals(result.getMimeType(), "image/png");
+        // First slide is numbered 1, not zero (see PowerPointUtils interface)
+        assertEquals("Slide " + (SLIDE_NUMBER + 1) + ".png", result.getFilename());
+        
+        ImageInfo info = imagingService.getImageInfo(result);
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+
+            Dimension pgsize = fullPres.getPageSize();
+            int w = pgsize.width;
+            int h = pgsize.height;
+            
+            assertEquals(w, info.getWidth());
+            assertEquals(h, info.getHeight());
+        }
+    }
+    
+    @Test
+    public void shouldGetOneThumbnailAsSmallJpeg() throws Exception {
+        
+        int SLIDE_NUMBER = 4;
+
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
+
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        Blob result = pptUtils.getThumbnail(testFileBlob, SLIDE_NUMBER, 200, "jpeg");
+
+        assertNotNull(result);
+        assertEquals(result.getMimeType(), "image/jpeg");
+        // First slide is numbered 1, not zero (see PowerPointUtils interface)
+        assertEquals("Slide " + (SLIDE_NUMBER + 1) + ".jpg", result.getFilename());
+        
+        ImageInfo info = imagingService.getImageInfo(result);
+        assertEquals(200, info.getWidth());
+        
+    }
 
 }

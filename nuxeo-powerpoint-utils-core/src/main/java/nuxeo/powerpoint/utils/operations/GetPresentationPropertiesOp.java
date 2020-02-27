@@ -22,7 +22,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " When useAspose is true, the list of fonts is also returned.")
 public class GetPresentationPropertiesOp {
 
-    public static final String ID = "Conversion.GetPowerPointPresentationProperties";
+    public static final String ID = "Conversion.PowerPointGetProperties";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath = "file:sontent";

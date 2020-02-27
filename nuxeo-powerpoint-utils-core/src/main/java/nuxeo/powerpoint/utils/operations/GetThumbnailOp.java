@@ -16,20 +16,27 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 /**
  *
  */
-@Operation(id = GetSlideOp.ID, category = Constants.CAT_CONVERSION, label = "PowerPoint: Get Slide", description = "Extract a slide from the input presentation."
-        + " The blob will be named {original presentation name}-{slideNumberStartAt1}.pptx"
-        + " slideNumber is the number of the slide. WARNING: It is zero-based, even if the output title starts at 1 (for better end user experience)."
-        + " input can be a blob of the presentation, or a document. In this case xpath tells the operation which blob to use (file:content by default)."
+@Operation(id = GetThumbnailOp.ID, category = Constants.CAT_CONVERSION, label = "PowerPoint: Get a Thumbnail", description = "return a Blob of thumbnail of the slide."
+        + " slideNumber is the number of the slide, zero-based. WARNING: , even if the output title starts at 1 (for better end user experience)."
+        + " format can be \"jpg\" or \"png\"."
+        + " maxWidth allows for returning smaller images. Any value <= 0 returns the images in the original dimension."
+        + " If onlyVisible is true, thumbnails are returned only for visible slides."
         + " useAspose tells the operaiton to use Aspose for the rendition. Default is Apache POI. Slides rendered with Aspose have a better quality.")
-public class GetSlideOp {
+public class GetThumbnailOp {
 
-    public static final String ID = "Conversion.PowerPointGetSlide";
+    public static final String ID = "Conversion.PowerPointGetOneThumbnail";
 
     @Param(name = "xpath", required = false, values = { "file:content" })
     protected String xpath;
 
     @Param(name = "slideNumber", required = true)
     protected Integer slideNumber;
+
+    @Param(name = "maxWidth", required = false)
+    protected Integer maxWidth = 0;
+
+    @Param(name = "format", widget = Constants.W_OPTION, required = false, values = { "jpeg", "png" })
+    protected String format = "png";
 
     @Param(name = "useAspose", required = false)
     protected Boolean useAspose = false;
@@ -38,13 +45,13 @@ public class GetSlideOp {
     public Blob run(DocumentModel doc) throws IOException {
 
         Blob result;
-        
+
         if (useAspose) {
             PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
-            result = asposePptUtils.getSlide(doc, xpath, slideNumber);
+            result = asposePptUtils.getThumbnail(doc, xpath, slideNumber, maxWidth, format);
         } else {
             PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
-            result = pptUtils.getSlide(doc, xpath, slideNumber);
+            result = pptUtils.getThumbnail(doc, xpath, slideNumber, maxWidth, format);
         }
 
         return result;
@@ -52,14 +59,15 @@ public class GetSlideOp {
 
     @OperationMethod
     public Blob run(Blob blob) throws IOException {
+
         Blob result;
-        
+
         if (useAspose) {
             PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
-            result = asposePptUtils.getSlide(blob, slideNumber);
+            result = asposePptUtils.getThumbnail(blob, slideNumber, maxWidth, format);
         } else {
             PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
-            result = pptUtils.getSlide(blob, slideNumber);
+            result = pptUtils.getThumbnail(blob, slideNumber, maxWidth, format);
         }
 
         return result;
