@@ -39,6 +39,7 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
     * Used only if input is a document. `xpath` is the field to use
     * Default value is `"file:content"`
   * `useAspose`
+    * Boolean, optional (default: `false`)
     * When using Aspose, more information can be returned, like the list of fonts used in the presentation.
 * Return a JSON string containing the properties. See below "Example of Properties Output"
 
@@ -84,7 +85,7 @@ Split the input presentation and returns a list of blobs, one per slide. Each sl
     * Used only if input is a `Document`. `xpath` is the field to use
     * Default value is `"file:content"`
   * `useAspose`
-    * boolean, optional
+    * boolean, optional (default: `false`)
     * If `false` (default value), the code will make use of Apache POI to split the presentation.
     * **WARNING** On this case, splitting the presentation can be slow. For big presentation (dozens of complex slides), we recommend running it asynchronously if it was launched by a user in the UI. With Nuxeo Automation, it is possible to handle the business logic and then send a mail notification once the split is done.
     * If `true`, the operation will use Aspose to split the slides. This is done very quickly. This requires a valide Aspose license
@@ -109,7 +110,7 @@ The result blob's file name is `{original presentation name}-{slideNumberStartAt
   	* Integer, _required_
      The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
   * `useAspose`
-    * boolean, optional
+    * boolean, optional (default: `false`)
     * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
     * Aspose generates, usually, smaller slides with the same quality.
 * Returns a `Blob`, a powerpoint presentation with the single slide
@@ -138,7 +139,7 @@ Return a `BlobList` of thumbnails, one/slide, as PNG of JPEG, in the original sl
     * String, optional, default is "png"
     * Can be only can be "jpg" or "png"
   * `useAspose`
-    * boolean, optional
+    * boolean, optional (default: `false`)
     * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
     * Slides rendered with Aspose usually have a better quality.
 * Returns a `BlobList` of images, one per slide, in the desired size and format. Each image will have the name `{original-file-name}-{slideNumberStartAt1}.{format}` (slide numbers in the output start at 1 to avoid confusion for an end user)
@@ -167,7 +168,7 @@ Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide d
     * String, optional, default is "png"
     * Can be only can be "jpg" or "png"
   * `useAspose`
-    * boolean, optional
+    * boolean, optional (default: `false`)
     * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
     * Slides rendered with Aspose usually have a better quality.
 * Returns a `Blob`n an image rendition of teh slide, in the desired size and format. The file name is `{original-file-name}-{slideNumberStartAt1}.{format}` **WARNING** When you request slide 3 (0-based) the output will be `... -4 ...`.
