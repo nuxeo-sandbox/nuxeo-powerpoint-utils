@@ -19,7 +19,7 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 @Operation(id = GetThumbnailsOp.ID, category = Constants.CAT_CONVERSION, label = "PowerPoint: Get Thumbnails", description = "return a BlobList of thumbnails, one/slide."
         + " format can be \"jpg\" or \"png\"."
         + " maxWidth allows for returning smaller images. Any value <= 0 returns the images in the original dimension."
-        + " ignoreWhen Hidden is true, thumbnails are returned only for visible slides.")
+        + " If onlyVisible is true, thumbnails are returned only for visible slides.")
 public class GetThumbnailsOp {
 
     public static final String ID = "Conversion.GetPowerPointThumbnails";
@@ -30,15 +30,44 @@ public class GetThumbnailsOp {
     @Param(name = "useAspose", required = false)
     protected Boolean useAspose = false;
 
+    @Param(name = "maxWidth", required = false)
+    protected Integer maxWidth = 0;
+
+    @Param(name = "format", widget = Constants.W_OPTION, required = false, values = { "jpeg", "png" })
+    protected String format = "png";
+
+    @Param(name = "onlyVisible", required = false)
+    protected Boolean onlyVisible = false;
+
     @OperationMethod
     public BlobList run(DocumentModel doc) throws IOException {
 
-        throw new UnsupportedOperationException("Not yet implemented");
+        BlobList result;
+
+        if (useAspose) {
+            PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
+            result = asposePptUtils.getThumbnails(doc, xpath, maxWidth, format, onlyVisible);
+        } else {
+            PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+            result = pptUtils.getThumbnails(doc, xpath, maxWidth, format, onlyVisible);
+        }
+
+        return result;
     }
 
     @OperationMethod
     public BlobList run(Blob blob) throws IOException {
 
-        throw new UnsupportedOperationException("Not yet implemented");
+        BlobList result;
+
+        if (useAspose) {
+            PowerPointUtilsWithAspose asposePptUtils = new PowerPointUtilsWithAspose();
+            result = asposePptUtils.getThumbnails(blob, maxWidth, format, onlyVisible);
+        } else {
+            PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+            result = pptUtils.getThumbnails(blob, maxWidth, format, onlyVisible);
+        }
+
+        return result;
     }
 }

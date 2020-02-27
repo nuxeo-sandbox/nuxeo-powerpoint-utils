@@ -107,7 +107,7 @@ public interface PowerPointUtils {
     Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName);
 
     /**
-     * Returns a list of images, one thumbnail/slide with options:
+     * Returns a list of images, one thumbnail/slide contained in blob presentation, with options:
      * - A maximum width. If this width is lower than the presentation width, then the height will also be reduced
      * accordingly. Any value <= 0 means "original SlideDeck size"
      * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
@@ -122,6 +122,26 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException;
+
+    /**
+     * Returns a list of images, one thumbnail/slide contained in the presentation in doc, in the xpath
+     * field (if null or empty, default to "file:content")with options:
+     * - A maximum width. If this width is lower than the presentation width, then the height will also be reduced
+     * accordingly. Any value <= 0 means "original SlideDeck size"
+     * - format can be "jpg", "jpeg" or "png". Any other format thows an exception. If not empty or null, use "png"
+     * - onlyVisible: if true, hidden slides will be ignored, no thumbnail will be calculated
+     * 
+     * @param doc, document holging the presentation
+     * @param xpath, the field to use (default to "file:content")
+     * @param maxWidth
+     * @param format, "jpg", "jpeg" ot "png" only
+     * @param onlyVisible, if true, no thumbnail will be calculated for hidden slides
+     * @return a list of images in the desired format and size
+     * @throws IOException
+     * @since 10.10
+     */
+    BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
+            throws IOException;
 
     /**
      * Helper utility getting the mime-type of a blob

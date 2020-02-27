@@ -277,6 +277,19 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
     }
     
+    @Override
+    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
+            throws IOException {
+        
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        Blob blob = (Blob) doc.getPropertyValue(xpath);
+        BlobList blobs = getThumbnails(blob, maxWidth, format, onlyVisible);
+
+        return blobs;
+    }
+    
     /**
      * Register Aspose with a valid license
      * 

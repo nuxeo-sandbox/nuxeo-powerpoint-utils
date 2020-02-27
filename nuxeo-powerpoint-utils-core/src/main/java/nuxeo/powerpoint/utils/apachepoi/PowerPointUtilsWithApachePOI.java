@@ -354,6 +354,19 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return result;
     }
+    
+    @Override
+    public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
+            throws IOException {
+        
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        Blob blob = (Blob) doc.getPropertyValue(xpath);
+        BlobList blobs = getThumbnails(blob, maxWidth, format, onlyVisible);
+
+        return blobs;
+    }
 
     // ==============================> Specific Apache POI Utilities
     public Map<String, XSLFSlideMaster> getSlideMasters(XMLSlideShow slideShow) {
