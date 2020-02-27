@@ -93,16 +93,19 @@ public class TestPowerPointUtilsWithApachePOI {
         assertNotNull(blobs);
 
         // For quick tests on your Mac :-)
-        // for (Blob b : blobs) {
+        //for (Blob b : blobs) {
         // TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
-        // }
+        //}
+        
+        // First slide is numbered 1, not zero (see PowerPointUtils interface)
+        assertTrue(blobs.get(0).getFilename().endsWith("-1.pptx"));
 
         try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
 
             assertEquals(fullPres.getSlides().size(), blobs.size());
 
             List<XSLFSlide> allSlides = fullPres.getSlides();
-
+            
             for (int i = 0; i < blobs.size(); i++) {
                 Blob blob = blobs.get(i);
                 try (FileInputStream is = new FileInputStream(blob.getFile())) {

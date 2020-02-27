@@ -105,6 +105,20 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName);
+    
+    /**
+     * Return a presentation of one slide. Master slides are added to the slide.
+     * slideNumber is zero-based, but the file name will be...
+     * The name of the file will be "{original-filename-}{slideNumber + 1}.pptx
+     * ... so it is not necessary to re-process the titles for end users
+     * 
+     * @param blob, the presentation
+     * @param slideNumber, zero-based
+     * @return a presentation containing only the slide.
+     * @throws IOException
+     * @since 10.10
+     */
+    Blob getSlide(Blob blob, int slideNumber) throws IOException;
 
     /**
      * Returns a list of images, one thumbnail/slide contained in blob presentation, with options:
@@ -142,6 +156,9 @@ public interface PowerPointUtils {
      */
     BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
             throws IOException;
+    
+    
+    //Blob getThumbnail(Blob blob, int maxWidth, String format);
 
     /**
      * Helper utility getting the mime-type of a blob

@@ -75,43 +75,22 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
         BlobList result = new BlobList();
 
-        String pptMimeType;
-        String fileNameBase;
-
         if (blob == null) {
             return result;
         }
 
-        pptMimeType = PowerPointUtils.getBlobMimeType(blob);
-        fileNameBase = blob.getFilename();
-        fileNameBase = FilenameUtils.getBaseName(fileNameBase);
-        fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
-
         try {
             Presentation pres = new Presentation(blob.getStream());
 
-            File tempDirectory = FileUtils.getTempDirectory();
             int slidesCount = pres.getSlides().size();
             for (int i = 0; i < slidesCount; i++) {
 
-                Presentation destPres = new Presentation();
-                // May create a default slide, we want to start from scratch
-                while (destPres.getSlides().size() > 0) {
-                    destPres.getSlides().removeAt(0);
-                }
-                destPres.getMasters().removeUnused(true);
-                ISlideCollection slds = destPres.getSlides();
-                slds.addClone(pres.getSlides().get_Item(i));
-
-                File newFile = new File(tempDirectory, fileNameBase + (i + 1) + ".pptx");
-                destPres.save(newFile.getAbsolutePath(), SaveFormat.Pptx);
-                FileBlob fb = new FileBlob(newFile.getAbsoluteFile());
-                fb.setMimeType(pptMimeType);
-                result.add(fb);
+                Blob oneSlidePres = getSlide(blob, i);
+                result.add(oneSlidePres);
             }
 
-        } catch (IOException e) {
-            throw new NuxeoException("Failed to split PowerPoint presentation.", e);
+        } catch (IOException | NuxeoException e) {
+            throw new NuxeoException(e);
         }
 
         return result;
@@ -196,22 +175,72 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
         return result;
     }
-    
+
     @Override
     public Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName) {
-        
+
         if (StringUtils.isBlank(xpath)) {
             xpath = "file:content";
         }
-        
+
         BlobList blobs = new BlobList();
-        for(DocumentModel doc : docs) {
+        for (DocumentModel doc : docs) {
             blobs.add((Blob) doc.getPropertyValue(xpath));
         }
-        
+
         return merge(blobs, reuseMasters, fileName);
     }
-    
+
+    // ==============================> GET SLIDE
+    /*
+     * Please see comment for splitPresentation() regarding Apache POI (need to duplicate the presentation
+     * and delete all other slides)
+     * 
+     * Also check the interface : slideNumber is
+     */
+    @Override
+    public Blob getSlide(Blob blob, int slideNumber) throws IOException {
+        
+        Blob result = null;
+
+        if (blob == null) {
+            return result;
+        }
+
+        String pptMimeType = PowerPointUtils.getBlobMimeType(blob);
+        
+        try {
+            Presentation pres = new Presentation(blob.getStream());
+            
+            Presentation destPres = new Presentation();
+            // May create a default slide, we want to start from scratch
+            while (destPres.getSlides().size() > 0) {
+                destPres.getSlides().removeAt(0);
+            }
+            destPres.getMasters().removeUnused(true);
+            ISlideCollection slds = destPres.getSlides();
+            
+            slds.addClone(pres.getSlides().get_Item(slideNumber));
+
+            result = Blobs.createBlobWithExtension(".pptx");
+            destPres.save(result.getFile().getAbsolutePath(), SaveFormat.Pptx);
+            
+            // Update blob info
+            result.setMimeType(pptMimeType);
+            String fileNameBase = blob.getFilename();
+            fileNameBase = FilenameUtils.getBaseName(fileNameBase);
+            fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
+            // See interface: the file name must be 1-based, not zero-based
+            result.setFilename(fileNameBase + (slideNumber + 1) + ".pptx");
+            
+        } catch (IOException e) {
+            throw new NuxeoException("Failed to get slide #" + (slideNumber - 1), e);
+        }
+        
+        
+        return result;
+    }
+
     // ==============================> THUMBNAILS
     @Override
     public BlobList getThumbnails(Blob blob, int maxWidth, String format, boolean onlyVisible) throws IOException {
@@ -241,10 +270,10 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         default:
             throw new NuxeoException(format + " is no a supported formats (only jpg or png)");
         }
-        
+
         try {
             Presentation pres = new Presentation(blob.getStream());
-            
+
             double width = pres.getSlideSize().getSize().getWidth();
             double height = pres.getSlideSize().getSize().getHeight();
 
@@ -254,18 +283,18 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
                 width = maxWidth;
                 height = (int) (height * scale);
             }
-            
+
             int slidesCount = pres.getSlides().size();
             for (int i = 0; i < slidesCount; i++) {
 
                 ISlide slide = pres.getSlides().get_Item(i);
-                
-                if(onlyVisible && slide.getHidden()) {
+
+                if (onlyVisible && slide.getHidden()) {
                     continue;
                 }
-                
+
                 BufferedImage img = slide.getThumbnail(scale, scale);
-                
+
                 Blob b = Blobs.createBlobWithExtension("." + format);
                 javax.imageio.ImageIO.write(img, format, b.getFile());
                 b.setMimeType(mimeType);
@@ -277,15 +306,15 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         } catch (IOException e) {
             throw new NuxeoException("Failed gerenate thumbnails.", e);
         }
-        
+
         return result;
 
     }
-    
+
     @Override
     public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
             throws IOException {
-        
+
         if (StringUtils.isBlank(xpath)) {
             xpath = "file:content";
         }
@@ -294,10 +323,9 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
         return blobs;
     }
-    
+
     /**
      * Register Aspose with a valid license
-     * 
      * See https://docs.aspose.com/display/slidesjava/Licensing
      * 
      * @param pathToLicenseFile

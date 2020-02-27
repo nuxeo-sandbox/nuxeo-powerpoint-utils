@@ -173,62 +173,24 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     // ==============================> SPLIT
     /*
      * <b>IMPORTANT</b>
-     * As of today (Apache POI 4.1.1, January 2020), it is very very difficult to extract a slide. There is no API for
-     * this. Getting the master, the layout, getting the related/embedded images, graphs etc. is super cumbersome, and
-     * for once, the Internet is not helping. It confirms it's extremely hard to make sure you extract a slide with all
-     * its dependencies (master, layouts, images, videos, ...) so we are doing it in a different way: basically, for
-     * each slide, we delete all the other slides. This is surely a slow operation using CPU and i/o.
+     * See {@link #getSlide()} for limitation and potential slowness. Basically, for each slide, we delete all the other
+     * slides. This is surely a slow operation using CPU and i/o.
      */
     @Override
     public BlobList splitPresentation(Blob blob) throws IOException {
 
         BlobList result = new BlobList();
-        String pptMimeType;
-        String fileNameBase;
 
         if (blob == null) {
             return result;
         }
 
-        pptMimeType = PowerPointUtils.getBlobMimeType(blob);
-        fileNameBase = blob.getFilename();
-        fileNameBase = FilenameUtils.getBaseName(fileNameBase);
-        fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
-
-        File originalFile = blob.getFile();
-
         try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
 
-            File tempDirectory = FileUtils.getTempDirectory();
             int slidesCount = ppt.getSlides().size();
             for (int i = 0; i < slidesCount; i++) {
 
-                // 1. Duplicate the original presentation
-                File newFile = new File(tempDirectory, fileNameBase + (i + 1) + ".pptx");
-                FileUtils.copyFile(originalFile, newFile);
-
-                // 2. Remove slides in the copy
-                try (InputStream is = new FileInputStream(newFile)) {
-                    try (XMLSlideShow copy = new XMLSlideShow(is)) {
-
-                        for (int iBefore = 0; iBefore < i; iBefore++) {
-                            copy.removeSlide(0);
-                        }
-
-                        // Now, our slide is the first one (0 based)
-                        int tempSlidesCount = copy.getSlides().size();
-                        for (int iAfter = 1; iAfter < tempSlidesCount; iAfter++) {
-                            copy.removeSlide(1);
-                        }
-
-                        try (FileOutputStream out = new FileOutputStream(newFile)) {
-                            copy.write(out);
-                        }
-                    }
-                }
-
-                // 3. Save as blob
-                FileBlob oneSlidePres = new FileBlob(newFile, pptMimeType);
+                Blob oneSlidePres = getSlide(blob, i);
                 result.add(oneSlidePres);
             }
         }
@@ -265,6 +227,74 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     public Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName) {
 
         throw new UnsupportedOperationException("Merging slides is not supported with Apache POI, use Aspose instead.");
+    }
+
+    // ==============================> GET SLIDE
+    /*
+     * As of today (Apache POI 4.1.1, January 2020), it is very very difficult to extract a slide. There is no API for
+     * this. Getting the master, the layout, getting the related/embedded images, graphs etc. is super cumbersome, and
+     * for once, the Internet is not helping. It confirms it's extremely hard to make sure you extract a slide with all
+     * its dependencies (master, layouts, images, videos, ...) so we are doing it in a different way: basically, for
+     * each slide, we delete all the other slides. This is surely a slow operation using CPU and i/o.
+     */
+    @Override
+    public Blob getSlide(Blob blob, int slideNumber) throws IOException {
+
+        Blob result = null;
+
+        if (blob == null) {
+            return result;
+        }
+
+        String pptMimeType = PowerPointUtils.getBlobMimeType(blob);
+        File originalFile = blob.getFile();
+
+        try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
+
+            // Sanity check
+            if (slideNumber < 0 || slideNumber >= ppt.getSlides().size()) {
+                throw new NuxeoException("Invalid slide number: " + slideNumber);
+            }
+
+            // 1. Duplicate the original presentation
+            result = Blobs.createBlobWithExtension(".pptx");
+            File newFile = result.getFile();
+            FileUtils.copyFile(originalFile, newFile);
+
+            // 2. Remove slides in the copy
+            try (InputStream is = new FileInputStream(newFile)) {
+                try (XMLSlideShow copy = new XMLSlideShow(is)) {
+
+                    // Remove slide(s) before
+                    for (int iBefore = 0; iBefore < slideNumber; iBefore++) {
+                        copy.removeSlide(0);
+                    }
+
+                    // Now, our slide is the first one
+                    int tempSlidesCount = copy.getSlides().size();
+                    for (int iAfter = 1; iAfter < tempSlidesCount; iAfter++) {
+                        copy.removeSlide(1);
+                    }
+
+                    // Flush
+                    try (FileOutputStream out = new FileOutputStream(newFile)) {
+                        copy.write(out);
+                    }
+
+                    // Update blob info
+                    result.setMimeType(pptMimeType);
+                    String fileNameBase = blob.getFilename();
+                    fileNameBase = FilenameUtils.getBaseName(fileNameBase);
+                    fileNameBase = StringUtils.appendIfMissing(fileNameBase, "-");
+                    // See interface: the file name must be 1-based, not zero-based
+                    result.setFilename(fileNameBase + (slideNumber + 1) + ".pptx");
+                }
+            }
+
+        }
+
+        return result;
+
     }
 
     // ==============================> THUMBNAILS
@@ -323,14 +353,14 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                 }
 
                 // Thanks to Apache example, PPTX2PNG
-                //BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                // BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                 Graphics2D graphics = img.createGraphics();
 
                 /*
-                graphics.setPaint(Color.white);
-                graphics.fill(new Rectangle2D.Float(0, 0, width, height));
-                */
+                 * graphics.setPaint(Color.white);
+                 * graphics.fill(new Rectangle2D.Float(0, 0, width, height));
+                 */
 
                 // default rendering options
                 graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -354,11 +384,11 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return result;
     }
-    
+
     @Override
     public BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
             throws IOException {
-        
+
         if (StringUtils.isBlank(xpath)) {
             xpath = "file:content";
         }

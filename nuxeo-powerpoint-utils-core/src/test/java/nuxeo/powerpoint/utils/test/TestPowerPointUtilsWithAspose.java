@@ -97,7 +97,10 @@ public class TestPowerPointUtilsWithAspose {
         // For quick tests on your Mac :-)
         //for (Blob b : blobs) {
         // TestUtils.saveBlobOnDesktop(b, "test-ppt-utils");
-        // }
+        //}
+        
+        // First slide is numbered 1, not zero (see PowerPointUtils interface)
+        assertTrue(blobs.get(0).getFilename().endsWith("-1.pptx"));
 
         try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
 
