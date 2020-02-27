@@ -18,18 +18,41 @@
  */
 package nuxeo.powerpoint.utils.test;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.poi.xslf.usermodel.XSLFComments;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.nuxeo.common.utils.FileUtils;
+import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
 /**
  * @since 10.10
  */
 public class TestUtils {
+
+    public static final String MAIN_TEST_PRESENTATION = "files/2020-Nuxeo-Overview-abstract.pptx";
+
+    public static final int MAIN_TEST_PRESENTATION_SLIDES_COUNT = 11;
+
+    public static final int MAIN_TEST_PRESENTATION_HIDDEN_SLIDES = 1;
+
+    public static Blob getMainTestPresentationTest() {
+        File testFile = FileUtils.getResourceFileFromContext(MAIN_TEST_PRESENTATION);
+
+        assertNotNull(testFile);
+        Blob testFileBlob = new FileBlob(testFile);
+        assertNotNull(testFileBlob);
+
+        testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+
+        return testFileBlob;
+    }
 
     /*
      * This one is for local quick test with human checking :-). Requires inFolderName
@@ -50,10 +73,10 @@ public class TestUtils {
      * @since 10.10
      */
     public static boolean slidesLookTheSame(XSLFSlide s1, XSLFSlide s2) {
-        
+
         return slideToString(s1).equals(slideToString(s2));
     }
-    
+
     /**
      * Return a String description of some properties of the slide.
      * 
@@ -62,20 +85,20 @@ public class TestUtils {
      * @since 10.10
      */
     public static String slideToString(XSLFSlide slide) {
-        
+
         ArrayList<String> values = new ArrayList<String>();
-        
+
         values.add("Title: " + slide.getTitle());
-                
+
         XSLFComments comments = slide.getComments();
-        if(comments != null) {
+        if (comments != null) {
             values.add("Comments: " + comments.getNumberOfComments());
         }
-        
+
         values.add("Layout name: " + slide.getSlideLayout().getName());
         values.add("Bg fillcolor: " + slide.getBackground().getFillColor());
         values.add("Relastions: " + slide.getRelations().size());
-                
+
         return String.join(", ", values);
     }
 }

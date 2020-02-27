@@ -1,10 +1,8 @@
 package nuxeo.powerpoint.utils.aspose;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -16,7 +14,6 @@ import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 
 import com.aspose.slides.IFontData;
 import com.aspose.slides.ILayoutSlide;
@@ -100,11 +97,7 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
     @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
 
-        if (StringUtils.isBlank(xpath)) {
-            xpath = "file:content";
-        }
-        Blob blob = (Blob) input.getPropertyValue(xpath);
-        BlobList blobs = splitPresentation(blob);
+        BlobList blobs = splitPresentation(PowerPointUtils.getBlob(input, xpath));
 
         return blobs;
     }
@@ -185,7 +178,7 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
 
         BlobList blobs = new BlobList();
         for (DocumentModel doc : docs) {
-            blobs.add((Blob) doc.getPropertyValue(xpath));
+            blobs.add(PowerPointUtils.getBlob(doc, xpath));
         }
 
         return merge(blobs, reuseMasters, fileName);
@@ -239,6 +232,11 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
         
         
         return result;
+    }
+    
+    public Blob getSlide(DocumentModel input, String xpath, int slideNumber) throws IOException {
+        
+        return getSlide(PowerPointUtils.getBlob(input, xpath), slideNumber);
     }
 
     // ==============================> THUMBNAILS

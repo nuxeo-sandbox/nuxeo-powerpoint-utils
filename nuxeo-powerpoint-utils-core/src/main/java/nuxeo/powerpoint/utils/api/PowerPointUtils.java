@@ -55,7 +55,8 @@ public interface PowerPointUtils {
 
     /**
      * Returns a list of blob, one/slide in the input presentation. If the input presentation is null or is not a
-     * PowerPoint file, returns and empty list (not null)
+     * PowerPoint file, returns and empty list (not null).
+     * The name of each blob will be "{original-filename-}{slideNumber + 1}.pptx", starting at 1.
      * 
      * @param input, the blob containing the presentation to split
      * @return a list of blobs, one/slide. Empty list if input is null or not a presentation
@@ -67,6 +68,7 @@ public interface PowerPointUtils {
      * Returns a list of blobs, one/slide after splitting the presentation contained in the input document in the xpath
      * field (if null or empty, default to "file:content"). Returns an empty list in the blob at xpath is null, or is
      * not a presentation.
+     * The name of each blob will be "{original-filename-}{slideNumber + 1}.pptx", starting at 1.
      * 
      * @param input, the document containing a PowerPoint presentation
      * @param xpath, the field storing the presentation. Optional, "file:content" by default
@@ -105,7 +107,7 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     Blob merge(DocumentModelList docs, String xpath, boolean reuseMasters, String fileName);
-    
+
     /**
      * Return a presentation of one slide. Master slides are added to the slide.
      * slideNumber is zero-based, but the file name will be...
@@ -119,6 +121,22 @@ public interface PowerPointUtils {
      * @since 10.10
      */
     Blob getSlide(Blob blob, int slideNumber) throws IOException;
+
+    /**
+     * Return a presentation of one slide. Source presentation is read in the input document in the xpath field. If
+     * xpath is empty or null, "file:content" is used. Master slides are added to the slide.
+     * slideNumber is zero-based, but the file name will be...
+     * The name of the file will be "{original-filename-}{slideNumber + 1}.pptx
+     * ... so it is not necessary to re-process the titles for end users
+     * 
+     * @param input
+     * @param xpath
+     * @param slideNumber
+     * @return
+     * @throws IOException
+     * @since 10.10
+     */
+    Blob getSlide(DocumentModel input, String xpath, int slideNumber) throws IOException;
 
     /**
      * Returns a list of images, one thumbnail/slide contained in blob presentation, with options:
@@ -156,9 +174,8 @@ public interface PowerPointUtils {
      */
     BlobList getThumbnails(DocumentModel doc, String xpath, int maxWidth, String format, boolean onlyVisible)
             throws IOException;
-    
-    
-    //Blob getThumbnail(Blob blob, int maxWidth, String format);
+
+    // Blob getThumbnail(Blob blob, int maxWidth, String format);
 
     /**
      * Helper utility getting the mime-type of a blob
@@ -211,6 +228,22 @@ public interface PowerPointUtils {
         }
 
         return fileName;
+    }
+    
+    /**
+     * Centralizing code repeated in a lot of places, to get "file:content" if no xpath is provided
+     * 
+     * @param doc
+     * @param xpath
+     * @return the blob at xpath, or at "file:content"
+     * @since 10.10
+     */
+    public static Blob getBlob(DocumentModel doc, String xpath) {
+        
+        if (StringUtils.isBlank(xpath)) {
+            xpath = "file:content";
+        }
+        return (Blob) doc.getPropertyValue(xpath);
     }
 
 }

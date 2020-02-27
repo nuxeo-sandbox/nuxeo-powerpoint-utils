@@ -49,7 +49,7 @@ The plugin provides utilities for extracting info, splitting and merging PowerPo
 
 #### Conversion.SplitPowerPointPresentation
 
-Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used.
+Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used. For each blob, the file name is: `{original presentation name}-{slideNumberStartAt1}.pptx` (starts at 1, not zero, so there is less confusion for an end user)
 
 **Warning**: If the master slides of the input presentation are "bigs" (contain HiRes images, videos, ...), then each slide will be big too. For example, if the size of all the master slides is 40MB and there are 100 slides, each slide will be at least 40MB, which is normal, they also contain the HiRes images, the videos, etc.
 

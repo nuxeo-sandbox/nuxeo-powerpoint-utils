@@ -19,7 +19,8 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
 @Operation(id = GetThumbnailsOp.ID, category = Constants.CAT_CONVERSION, label = "PowerPoint: Get Thumbnails", description = "return a BlobList of thumbnails, one/slide."
         + " format can be \"jpg\" or \"png\"."
         + " maxWidth allows for returning smaller images. Any value <= 0 returns the images in the original dimension."
-        + " If onlyVisible is true, thumbnails are returned only for visible slides.")
+        + " If onlyVisible is true, thumbnails are returned only for visible slides."
+        + " useAspose tells the operaiton to use Aspose for the rendition. Default is Apache POI. Slides rendered with Aspose have a better quality.")
 public class GetThumbnailsOp {
 
     public static final String ID = "Conversion.GetPowerPointThumbnails";

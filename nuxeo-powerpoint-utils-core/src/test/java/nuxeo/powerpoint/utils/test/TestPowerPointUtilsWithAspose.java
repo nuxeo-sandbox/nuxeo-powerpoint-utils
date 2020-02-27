@@ -46,7 +46,6 @@ import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
 import org.nuxeo.ecm.platform.picture.api.ImageInfo;
 import org.nuxeo.ecm.platform.picture.api.ImagingService;
-import org.nuxeo.ecm.platform.picture.api.ImageInfo;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -71,8 +70,6 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
     "org.nuxeo.ecm.platform.picture.convert", "org.nuxeo.ecm.platform.tag", "nuxeo.powerpoint.utils-core" })
 public class TestPowerPointUtilsWithAspose {
 
-    public static final String BIG_PRESENTATION = "files/2020-Nuxeo-Overview-abstract.pptx";
-
     @Inject
     protected CoreSession session;
 
@@ -82,17 +79,13 @@ public class TestPowerPointUtilsWithAspose {
     @Test
     public void shouldSplitABlobPresentation() throws Exception {
 
-        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
-        assertNotNull(testFile);
-        Blob testFileBlob = new FileBlob(testFile);
-        assertNotNull(testFileBlob);
-
-        testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
 
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
         BlobList blobs = pptUtils.splitPresentation(testFileBlob);
 
         assertNotNull(blobs);
+        assertEquals(TestUtils.MAIN_TEST_PRESENTATION_SLIDES_COUNT, blobs.size());
 
         // For quick tests on your Mac :-)
         //for (Blob b : blobs) {
@@ -132,12 +125,7 @@ public class TestPowerPointUtilsWithAspose {
     @Test
     public void tesGetProperties() throws Exception {
 
-        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
-        assertNotNull(testFile);
-        Blob testFileBlob = new FileBlob(testFile);
-        assertNotNull(testFileBlob);
-
-        testFileBlob.setMimeType("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
 
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
         JSONObject result = pptUtils.getProperties(testFileBlob);
@@ -148,9 +136,9 @@ public class TestPowerPointUtilsWithAspose {
         assertEquals("Nuxeo Unit Testing", result.get("Creator"));
         assertEquals("Nuxeo", result.get("Company"));
         assertEquals("Widescreen", result.get("PresentationFormat"));
-        
-        assertEquals(11, result.get("CountSlides"));
-        assertEquals(1, result.get("CountHiddenSlides"));
+
+        assertEquals(TestUtils.MAIN_TEST_PRESENTATION_SLIDES_COUNT, result.get("CountSlides"));
+        assertEquals(TestUtils.MAIN_TEST_PRESENTATION_HIDDEN_SLIDES, result.get("CountHiddenSlides"));
 
         JSONArray arr = result.getJSONArray("MasterSlides");
         assertEquals(2, arr.length());
@@ -292,10 +280,7 @@ public class TestPowerPointUtilsWithAspose {
     @Test
     public void testGetThumbnailsWithDefaultValues() throws Exception {
 
-        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
-        assertNotNull(testFile);
-        Blob testFileBlob = new FileBlob(testFile);
-        assertNotNull(testFileBlob);
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
 
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
 
@@ -327,10 +312,7 @@ public class TestPowerPointUtilsWithAspose {
     @Test
     public void testGetThumbnailsIgnoreHidden() throws Exception {
 
-        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
-        assertNotNull(testFile);
-        Blob testFileBlob = new FileBlob(testFile);
-        assertNotNull(testFileBlob);
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
 
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
 
@@ -348,10 +330,7 @@ public class TestPowerPointUtilsWithAspose {
     @Test
     public void testGetThumbnailsAsJpeg() throws Exception {
 
-        File testFile = FileUtils.getResourceFileFromContext(BIG_PRESENTATION);
-        assertNotNull(testFile);
-        Blob testFileBlob = new FileBlob(testFile);
-        assertNotNull(testFileBlob);
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
 
         PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
 
@@ -376,6 +355,33 @@ public class TestPowerPointUtilsWithAspose {
                 ImageInfo info = imagingService.getImageInfo(b);
                 assertEquals(w, info.getWidth());
                 assertEquals(h, info.getHeight());
+            }
+        }
+    }
+
+    @Test
+    public void tesGetSlide() throws Exception {
+        
+        int SLIDE_NUMBER = 4;
+
+        Blob testFileBlob = TestUtils.getMainTestPresentationTest();
+
+        PowerPointUtilsWithAspose pptUtils = new PowerPointUtilsWithAspose();
+        Blob result = pptUtils.getSlide(testFileBlob, SLIDE_NUMBER);
+
+        assertNotNull(result);
+        // First slide is numbered 1, not zero (see PowerPointUtils interface)
+        assertTrue(result.getFilename().endsWith("-" + (SLIDE_NUMBER + 1) + ".pptx"));
+
+        try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
+            
+            XSLFSlide original = fullPres.getSlides().get(SLIDE_NUMBER);
+            try (XMLSlideShow pres = new XMLSlideShow(result.getStream())) {
+
+                assertEquals(1, pres.getSlides().size());
+
+                XSLFSlide slide = pres.getSlides().get(0);
+                assertTrue(TestUtils.slidesLookTheSame(original, slide));
             }
         }
     }

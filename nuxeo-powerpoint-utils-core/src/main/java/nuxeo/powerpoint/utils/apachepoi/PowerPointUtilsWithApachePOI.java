@@ -50,7 +50,6 @@ import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontList;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontListEntry;
 
@@ -204,11 +203,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     @Override
     public BlobList splitPresentation(DocumentModel input, String xpath) throws IOException {
 
-        if (StringUtils.isBlank(xpath)) {
-            xpath = "file:content";
-        }
-        Blob blob = (Blob) input.getPropertyValue(xpath);
-        BlobList blobs = splitPresentation(blob);
+        BlobList blobs = splitPresentation(PowerPointUtils.getBlob(input, xpath));
 
         return blobs;
     }
@@ -295,6 +290,11 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return result;
 
+    }
+    
+    public Blob getSlide(DocumentModel input, String xpath, int slideNumber) throws IOException {
+        
+        return getSlide(PowerPointUtils.getBlob(input, xpath), slideNumber);
     }
 
     // ==============================> THUMBNAILS
