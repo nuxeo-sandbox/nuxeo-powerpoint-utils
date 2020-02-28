@@ -28,21 +28,21 @@ The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](http
 # Usage
 The plugin provides utilities for extracting info, splitting and merging PowerPoint presentations (for Java developer, see the `PowerPointUtils` interface). These utilities can be used via operations described here.
 
-Conversion.PowerPointGetProperties
+#### Conversion.PowerPointGetProperties
 * Label: `PowerPoint: Get Properties`
 * Input: `Blob` or `Document`
 * Output: `String`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a document. `xpath` is the field to use
-* Default value is `"file:content"`
-* `useAspose`
-* Boolean, optional (default: `false`)
-* When using Aspose, more information can be returned, like the list of fonts used in the presentation.
+  * `xpath`:
+    * String, optional
+    * Used only if input is a document. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `useAspose`
+    * Boolean, optional (default: `false`)
+    * When using Aspose, more information can be returned, like the list of fonts used in the presentation.
 * Return a JSON string containing the properties. See below "Example of Properties Output"
 
-Conversion.PowerPointMerge
+#### Conversion.PowerPointMerge
 
 **WARNING: This operation uses Aspose only, it is not possible to use Apache POI for this purpose**
 
@@ -50,22 +50,22 @@ Conversion.PowerPointMerge
 * Input: `Blobs` or `Documents`
 * Output: `Blob`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a `Documents`. `xpath` is the field to use
-* Default value is `"file:content"`
-* `fileName`
-* String, optional
-* The name of the resulting file. if it does not end with ".pptx", it is added.
-* Default: "merged.pptx"
-* `reuseMasters`
-* Boolean, optional
-* If `false`, all the master slides of the source presentations are added to the final, merged ones. This means that if some input presentations use the same masters, they will be duplicated in the resulting, merged presentation.
-* When `true`, the operation will transfer a copy of the original master slides only if they don't already exist in the merged presentation.
-* This is based on the combination _theme name + layout name_.
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Documents`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `fileName`
+    * String, optional
+    * The name of the resulting file. if it does not end with ".pptx", it is added.
+    * Default: "merged.pptx"
+  * `reuseMasters`
+    * Boolean, optional
+    * If `false`, all the master slides of the source presentations are added to the final, merged ones. This means that if some input presentations use the same masters, they will be duplicated in the resulting, merged presentation.
+    * When `true`, the operation will transfer a copy of the original master slides only if they don't already exist in the merged presentation.
+    * This is based on the combination _theme name + layout name_.
 * Returns a `Blob`, the presentation merging all the input ones. It is always a `pptx` presentation.
 
-Conversion.PowerPointSplit
+#### Conversion.PowerPointSplit
 
 Split the input presentation and returns a list of blobs, one per slide. Each slide also contains a copy of the original master slides (the theme) used. For each blob, the file name is: `{original presentation name}-{slideNumberStartAt1}.pptx` (starts at 1, not zero, so there is less confusion for an end user)
 
@@ -77,18 +77,18 @@ Split the input presentation and returns a list of blobs, one per slide. Each sl
 * Input: `Blob` or `Document`
 * Output: `BlobList`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a `Document`. `xpath` is the field to use
-* Default value is `"file:content"`
-* `useAspose`
-* boolean, optional (default: `false`)
-* If `false` (default value), the code will make use of Apache POI to split the presentation.
-* **WARNING** On this case, splitting the presentation can be slow. For big presentation (dozens of complex slides), we recommend running it asynchronously if it was launched by a user in the UI. With Nuxeo Automation, it is possible to handle the business logic and then send a mail notification once the split is done.
-* If `true`, the operation will use Aspose to split the slides. This is done very quickly. This requires a valid Aspose license
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `useAspose`
+    * boolean, optional (default: `false`)
+    * If `false` (default value), the code will make use of Apache POI to split the presentation.
+    * **WARNING** On this case, splitting the presentation can be slow. For big presentation (dozens of complex slides), we recommend running it asynchronously if it was launched by a user in the UI. With Nuxeo Automation, it is possible to handle the business logic and then send a mail notification once the split is done.
+    * If `true`, the operation will use Aspose to split the slides. This is done very quickly. This requires a valid Aspose license
 * Returns a `BlobList`, list of `Blobs`. Each blob is a side of the input presentation. It also contains a copy of the master slides.
 
-Conversion.PowerPointGetSlide
+#### Conversion.PowerPointGetSlide
 Return a `Blob`, single slide presentation, copy of the slide passed in the `slideNumber` parameter. The master slides are always copied to the returned presentation.
 
 The result blob's file name is `{original presentation name}-{slideNumberStartAt1}.pptx"`. So, even if `slideNumber` is zero-based, the file name is 1-based. This is done to avoid having users wondering why they requested slide 4 and got it, but named "my Presentation-3.pptx"
@@ -97,20 +97,20 @@ The result blob's file name is `{original presentation name}-{slideNumberStartAt
 * Input: `Blob` or `Document`
 * Output: `Blob`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a `Document`. `xpath` is the field to use
-* Default value is `"file:content"`
-* `slideNumber`
-* Integer, _required_
-The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
-* `useAspose`
-* boolean, optional (default: `false`)
-* If `false` (default value), the code will make use of Apache POI, else it uses Aspose
-* Aspose generates, usually, smaller slides with the same quality.
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `slideNumber`
+    * Integer, _required_
+    * The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
+  * `useAspose`
+    * boolean, optional (default: `false`)
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Aspose generates, usually, smaller slides with the same quality.
 * Returns a `Blob`, a powerpoint presentation with the single slide
 
-Conversion.PowerPointGetThumbnails
+#### Conversion.PowerPointGetThumbnails
 
 Return a `BlobList` of thumbnails, one/slide, as PNG of JPEG, in the original slide dimensions or with a scale factor. It is possible to return only the visible slides.
 
@@ -118,27 +118,27 @@ Return a `BlobList` of thumbnails, one/slide, as PNG of JPEG, in the original sl
 * Input: `Blob` or `Document`
 * Output: `BlobList`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a `Document`. `xpath` is the field to use
-* Default value is `"file:content"`
-* `maxWidth`
-* integer, optional
-* Allows for returning smaller images.
-* Any value <= 0 returns the images in the original dimension
-* `onlyVisible`
-* Boolean, optional
-* If `true`, thumbnails are returned only for visible slides.
-* `format`
-* String, optional, default is "png"
-* Can be only can be "jpg", "jpeg" or "png"
-* `useAspose`
-* boolean, optional (default: `false`)
-* If `false` (default value), the code will make use of Apache POI, else it uses Aspose
-* Slides rendered with Aspose usually have a better quality.
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `maxWidth`
+    * integer, optional
+    * Allows for returning smaller images.
+    * Any value <= 0 returns the images in the original dimension
+  * `onlyVisible`
+    * Boolean, optional
+    * If `true`, thumbnails are returned only for visible slides.
+  * `format`
+    * String, optional, default is "png"
+    * Can be only can be "jpg", "jpeg" or "png"
+  * `useAspose`
+    * boolean, optional (default: `false`)
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Slides rendered with Aspose usually have a better quality.
 * Returns a `BlobList` of images, one per slide, in the desired size and format. Each image will have the name `{original-file-name}-{slideNumberStartAt1}.{format}` (slide numbers in the output start at 1 to avoid confusion for an end user)
 
-Conversion.PowerPointGetOneThumbnail
+#### Conversion.PowerPointGetOneThumbnail
 
 Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide dimensions or with a scale factor.
 
@@ -146,36 +146,36 @@ Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide d
 * Input: `Blob` or `Document`
 * Output: `Blob`
 * Parameters:
-* `xpath`:
-* String, optional
-* Used only if input is a `Document`. `xpath` is the field to use
-* Default value is `"file:content"`
-* `slideNumber`
-* Integer, _required_
-The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
-* `maxWidth`
-* integer, optional
-* Allows for returning smaller images.
-* Any value <= 0 returns the images in the original dimension
-* `format`
-* String, optional, default is "png"
-* Can be only can be "jpg" or "png"
-* `useAspose`
-* boolean, optional (default: `false`)
-* If `false` (default value), the code will make use of Apache POI, else it uses Aspose
-* Slides rendered with Aspose usually have a better quality.
+  * `xpath`:
+    * String, optional
+    * Used only if input is a `Document`. `xpath` is the field to use
+    * Default value is `"file:content"`
+  * `slideNumber`
+    * Integer, _required_
+    * The number of the slide to extract. 0-based (value must be between 0 and (number of slides - 1)
+  * `maxWidth`
+    * integer, optional
+    * Allows for returning smaller images.
+    * Any value <= 0 returns the images in the original dimension
+  * `format`
+    * String, optional, default is "png"
+    * Can be only can be "jpg" or "png"
+  * `useAspose`
+    * boolean, optional (default: `false`)
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Slides rendered with Aspose usually have a better quality.
 * Returns a `Blob`, an image rendition of the slide, in the desired size and format. The file name is `{original-file-name}-{slideNumberStartAt1}.{format}` **WARNING** When you request slide 3 (0-based) the output will be `... -4 ...`.
 
-Conversion.SetAsposeSlidesLicense
+#### Conversion.SetAsposeSlidesLicense
 
 * Label: `Conversion.SetAsposeSlidesLicense`
 * Input: `void`
 * Output: `void`
 * Parameter:
-* `licensePath`, string _required_.
-* Path to the license key provided by Aspose
-* See Aspose's [documentation](https://docs.aspose.com/display/slidesjava/Licensing).
-* Make sure the license is at a path where Nuxeo can access it (meaning, for example, the "user" used to install Nuxeo can access this document)
+  * `licensePath`, string _required_.
+    * Path to the license key provided by Aspose
+    * See Aspose's [documentation](https://docs.aspose.com/display/slidesjava/Licensing).
+    * Make sure the license is at a path where Nuxeo can access it (meaning, for example, the "user" used to install Nuxeo can access this document)
 
 # Apache POI vs Aspose
 
