@@ -193,64 +193,146 @@ Calling `Conversion.GetPowerPointPresentationProperties` with `useAspose` set to
 
 ```
 {
-"AppVersion": "16.0000",   "Application": "Microsoft Macintosh PowerPoint",
-"AutoCompressPictures": true,
-"Company": "Nuxeo",   "CompatMode": false,   "CountHiddenSlides": 1,   "CountLines": -1,   "CountMMClips": 0,   "CountNotes": 10,   "CountPages": -1,   "CountParagraphs": 176,   "CountSlides": 11,   "CountTotalTime": 14140,   "CountWords": 599,   "Created": "2017-10-06T20:06:38.000",   "Creator": "Nuxeo Unit Testing",   "EmbeddedFonts": [],   "Fonts": [     "Arial",     "NeueHaasGroteskDisp Std Blk",     "NeueHaasGroteskDisp Std",     "Wingdings",     "Noto Sans Symbols",     "Calibri Light",     "Calibri",     "Open Sans Semibold",     "Abadi MT Condensed Extra Bold",
-"Neue Haas Grotesk Display Std 9"   ],
-"Height": 540,   "HyperlinkBase": "",   "Keywords": "nuxeo,api,cloud,low-code,overview,architecture,performance",   "LastModifiedByUser": "John Doe the Second",
-"LastPrinted": "2017-09-22T21:50:07.000",
-"Manager": "",   "MasterSlides": [     {
-"MasterFont": "NeueHaasGroteskDisp Std Blk",
-"Layouts": [
-"Blank",
-"Thank You Slide_2",
-"Laptop & Mobile App",
-"Title right & half background img left",         "Title & Subtitle",
-"Title big top with bg image",
-"Cover Slide",         "Title",
-"Agenda"       ],
-"MinorFont": "NeueHaasGroteskDisp Std",       "Name": "Office Theme"     },
-{
-"MasterFont": "Calibri Light",
-"Layouts": [
-"Main2",
-"Main1",
-"Main3"       ],
-"MinorFont": "Calibri",
-"Name": "Unit Test Second Theme"     }   ],
-"Modified": "2020-02-14T23:09:22.000",   "PresentationFormat": "Widescreen",   "Revision": "457",   "Slidesinfo": [     {
-"Master": "Cover Slide",
-"SlideNumber": 1,       "Title": "",       "Theme": "Office Theme"     },
-{
-"Master": "Agenda",       "SlideNumber": 2,       "Title": "",
-"Theme": "Office Theme"     },
-{
-"Master": "Title big top with bg image",       "SlideNumber": 3,       "Title": "Who is Nuxeo?",       "Theme": "Office Theme"     },
-{
-"Master": "Laptop & Mobile App",       "SlideNumber": 4,       "Title": "",
-"Theme": "Office Theme"     },
-{
-"Master": "Laptop & Mobile App",       "SlideNumber": 5,       "Title": "",
-"Theme": "Office Theme"     },
-{
-"Master": "Title & Subtitle",
-"SlideNumber": 6,       "Title": "Where We Are. ",       "Theme": "Office Theme"     },
-{
-"Master": "Title big top with bg image",       "SlideNumber": 7,       "Title": "",
-"Theme": "Office Theme"     },
-{
-"Master": "Blank",       "SlideNumber": 8,       "Title": "",       "Theme": "Office Theme"     },
-{
-"Master": "Title",       "SlideNumber": 9,       "Title": "Nuxeo Platform at a Glance",
-"Theme": "Office Theme"     },
-{
-"Master": "Title right & half background img left",       "SlideNumber": 10,
-"Title": "Our Kitchen is Open: Come on in.",       "Theme": "Office Theme"     },
-{
-"Master": "Thank You Slide_2",
-"SlideNumber": 11,       "Title": "Thibaud @ Nuxeo",       "Theme": "Office Theme"     }   ],
-"Template": "nuxeo_powerpoint-template_20171006",   "Title": "Nuxeo Overview",
-"Width": 960 }
+	"AppVersion": "16.0000",
+	"Application": "Microsoft Macintosh PowerPoint",
+	"AutoCompressPictures": true,
+	"Company": "Nuxeo",
+	"CompatMode": false,
+	"CountHiddenSlides": 1,
+	"CountLines": -1,
+	"CountMMClips": 0,
+	"CountNotes": 10,
+	"CountPages": -1,
+	"CountParagraphs": 176,
+	"CountSlides": 11,
+	"CountTotalTime": 14140,
+	"CountWords": 599,
+	"Created": "2017-10-06T20:06:38.000",
+	"Creator": "Nuxeo Unit Testing",
+	"EmbeddedFonts": [
+
+	],
+	"Fonts": [
+		"Arial",
+		"NeueHaasGroteskDisp Std Blk",
+		"NeueHaasGroteskDisp Std",
+		"Wingdings",
+		"Noto Sans Symbols",
+		"Calibri Light",
+		"Calibri",
+		"Open Sans Semibold",
+		"Abadi MT Condensed Extra Bold",
+		"Neue Haas Grotesk Display Std 9"
+	],
+	"Height": 540,
+	"HyperlinkBase": "",
+	"Keywords": "nuxeo,api,cloud,low-code,overview,architecture,performance",
+	"LastModifiedByUser": "John Doe the Second",
+	"LastPrinted": "2017-09-22T21:50:07.000",
+	"Manager": "",
+	"MasterSlides": [
+		{
+			"MasterFont": "NeueHaasGroteskDisp Std Blk",
+			"Layouts": [
+				"Blank",
+				"Thank You Slide_2",
+				"Laptop & Mobile App",
+				"Title right & half background img left",
+				"Title & Subtitle",
+				"Title big top with bg image",
+				"Cover Slide",
+				"Title",
+				"Agenda"
+			],
+			"MinorFont": "NeueHaasGroteskDisp Std",
+			"Name": "Office Theme"
+		},
+		{
+			"MasterFont": "Calibri Light",
+			"Layouts": [
+				"Main2",
+				"Main1",
+				"Main3"
+			],
+			"MinorFont": "Calibri",
+			"Name": "Unit Test Second Theme"
+		}
+	],
+	"Modified": "2020-02-14T23:09:22.000",
+	"PresentationFormat": "Widescreen",
+	"Revision": "457",
+	"Slidesinfo": [
+		{
+			"Master": "Cover Slide",
+			"SlideNumber": 1,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Agenda",
+			"SlideNumber": 2,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Title big top with bg image",
+			"SlideNumber": 3,
+			"Title": "Who is Nuxeo?",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Laptop & Mobile App",
+			"SlideNumber": 4,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Laptop & Mobile App",
+			"SlideNumber": 5,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Title & Subtitle",
+			"SlideNumber": 6,
+			"Title": "Where We Are. ",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Title big top with bg image",
+			"SlideNumber": 7,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Blank",
+			"SlideNumber": 8,
+			"Title": "",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Title",
+			"SlideNumber": 9,
+			"Title": "Nuxeo Platform at a Glance",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Title right & half background img left",
+			"SlideNumber": 10,
+			"Title": "Our Kitchen is Open: Come on in.",
+			"Theme": "Office Theme"
+		},
+		{
+			"Master": "Thank You Slide_2",
+			"SlideNumber": 11,
+			"Title": "Thibaud @ Nuxeo",
+			"Theme": "Office Theme"
+		}
+	],
+	"Template": "nuxeo_powerpoint-template_20171006",
+	"Title": "Nuxeo Overview",
+	"Width": 960
+}
 ```
 
 # Build
