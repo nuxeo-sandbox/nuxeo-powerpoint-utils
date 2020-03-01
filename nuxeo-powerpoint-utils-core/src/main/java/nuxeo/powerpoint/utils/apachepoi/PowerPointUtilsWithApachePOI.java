@@ -106,7 +106,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             obj.put("CountNotes", extProps.getNotes());
             obj.put("CountPages", extProps.getPages());
             obj.put("CountParagraphs", extProps.getParagraphs());
-            obj.put("CountSlides", extProps.getSlides());
+            obj.put("CountSlides", ppt.getSlides().size());
             obj.put("CountTotalTime", extProps.getTotalTime());
             obj.put("CountWords", extProps.getWords());
             // ----------------------------
