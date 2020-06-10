@@ -2,7 +2,7 @@
 <package type="addon" name="nuxeo-powerpoint-utilities" version="@VERSION@">
   <title>Nuxeo PowerPoint Utilities</title>
   <description>
-    <p>Utilityies to handle PowerPoint files (split, merge, thumbnails, ...)</p>
+    <p>Utilities to handle PowerPoint files (split, merge, thumbnails, ...)</p>
   </description>
   <home-page>https://github.com/nuxeo-sandbox/nuxeo-powerpoint-utils</home-page>
   <vendor>Nuxeo</vendor>
