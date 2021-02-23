@@ -23,7 +23,9 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.poi.xslf.usermodel.XSLFComment;
 import org.apache.poi.xslf.usermodel.XSLFComments;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.nuxeo.common.utils.FileUtils;
@@ -90,9 +92,9 @@ public class TestUtils {
 
         values.add("Title: " + slide.getTitle());
 
-        XSLFComments comments = slide.getComments();
+        List<XSLFComment> comments = slide.getComments();
         if (comments != null) {
-            values.add("Comments: " + comments.getNumberOfComments());
+            values.add("Comments: " + comments.size());
         }
 
         values.add("Layout name: " + slide.getSlideLayout().getName());

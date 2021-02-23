@@ -65,8 +65,7 @@ import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 @RunWith(FeaturesRunner.class)
 @Features(AutomationFeature.class)
 @RepositoryConfig(init = DefaultRepositoryInit.class, cleanup = Granularity.METHOD)
-@Deploy({ "org.nuxeo.ecm.platform.picture.api", "org.nuxeo.ecm.platform.picture.core",
-        "org.nuxeo.ecm.platform.picture.convert", "org.nuxeo.ecm.platform.tag", "nuxeo.powerpoint.utils-core" })
+@Deploy({ "org.nuxeo.ecm.platform.picture.core", "org.nuxeo.ecm.platform.tag", "nuxeo.powerpoint.utils-core" })
 public class TestPowerPointUtilsWithApachePOI {
 
     @Inject
@@ -283,7 +282,7 @@ public class TestPowerPointUtilsWithApachePOI {
 
     @Test
     public void tesGetSlide() throws Exception {
-        
+
         int SLIDE_NUMBER = 4;
 
         Blob testFileBlob = TestUtils.getMainTestPresentationTest();
@@ -296,7 +295,7 @@ public class TestPowerPointUtilsWithApachePOI {
         assertTrue(result.getFilename().endsWith("-" + (SLIDE_NUMBER + 1) + ".pptx"));
 
         try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
-            
+
             XSLFSlide original = fullPres.getSlides().get(SLIDE_NUMBER);
             try (XMLSlideShow pres = new XMLSlideShow(result.getStream())) {
 
@@ -307,10 +306,10 @@ public class TestPowerPointUtilsWithApachePOI {
             }
         }
     }
-    
+
     @Test
     public void testGetOneThumbnailWithDefaultParameters() throws Exception {
-        
+
         int SLIDE_NUMBER = 4;
 
         Blob testFileBlob = TestUtils.getMainTestPresentationTest();
@@ -323,22 +322,22 @@ public class TestPowerPointUtilsWithApachePOI {
         assertEquals(result.getMimeType(), "image/png");
         // First slide is numbered 1, not zero (see PowerPointUtils interface)
         assertEquals("Slide " + (SLIDE_NUMBER + 1) + ".png", result.getFilename());
-        
+
         ImageInfo info = imagingService.getImageInfo(result);
         try (XMLSlideShow fullPres = new XMLSlideShow(testFileBlob.getStream())) {
 
             Dimension pgsize = fullPres.getPageSize();
             int w = pgsize.width;
             int h = pgsize.height;
-            
+
             assertEquals(w, info.getWidth());
             assertEquals(h, info.getHeight());
         }
     }
-    
+
     @Test
     public void shouldGetOneThumbnailAsSmallJpeg() throws Exception {
-        
+
         int SLIDE_NUMBER = 4;
 
         Blob testFileBlob = TestUtils.getMainTestPresentationTest();
@@ -350,10 +349,10 @@ public class TestPowerPointUtilsWithApachePOI {
         assertEquals(result.getMimeType(), "image/jpeg");
         // First slide is numbered 1, not zero (see PowerPointUtils interface)
         assertEquals("Slide " + (SLIDE_NUMBER + 1) + ".jpg", result.getFilename());
-        
+
         ImageInfo info = imagingService.getImageInfo(result);
         assertEquals(200, info.getWidth());
-        
+
     }
 
 }

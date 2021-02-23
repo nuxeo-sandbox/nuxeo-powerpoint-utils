@@ -3,7 +3,7 @@
   <parent>
     <groupId>nuxeo.powerpoint.utils</groupId>
     <artifactId>nuxeo-powerpoint-utils-parent</artifactId>
-    <version>10.10-SNAPSHOT</version>
+    <version>11.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -40,6 +40,5 @@
       </plugin>
     </plugins>
   </build>
-
 
 </project>
