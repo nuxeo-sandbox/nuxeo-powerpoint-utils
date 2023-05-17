@@ -213,6 +213,40 @@ public interface PowerPointUtils {
     Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format) throws IOException;
 
     /**
+     * Receives a document and a pptx template. processes the template, replaces freemarker tag with the values, return
+     * a new pptx with the result.
+     * 
+     * Check each implementation for limitation. As of first implementation:
+     *   - Apache POI: The expression must be embedded in lines.
+     *     So, for example, this...
+     *                  ----------------------
+     *                 |  Hello               |
+     *                 |  ${doc["dc:title"]}  |
+     *                  ----------------------
+     *     ... will fail, while this one works well:
+     *                  ----------------------------
+     *                 |  Hello ${doc["dc:title"]}  |
+     *                  ----------------------------
+     *                 Or:
+     *                  ----------------------
+     *                 |  Hello               |
+     *                  ----------------------
+     *                  ----------------------
+     *                 |  ${doc["dc:title"]}  |
+     *                  ----------------------
+     * 
+     *   - Aspose: Impossible to test without a license, because it fails
+     *             to extract more than a few characters.
+     * @param doc
+     * @param template
+     * @param newFileName
+     * @return
+     * @throws Exception
+     * @since 2021.35
+     */
+    public Blob renderWithTemplate(DocumentModel doc, Blob template, String newFileName) throws Exception;
+
+    /**
      * Helper utility getting the mime-type of a blob
      * 
      * @param blob

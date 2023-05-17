@@ -5,7 +5,7 @@
   <parent>
     <groupId>nuxeo.powerpoint.utils</groupId>
     <artifactId>nuxeo-powerpoint-utils-parent</artifactId>
-    <version>11.4-SNAPSHOT</version>
+    <version>2021.35-SNAPSHOT</version>
   </parent>
   <artifactId>nuxeo-powerpoint-utils-core</artifactId>
   <name>Nuxeo powerpoint utils core</name>
@@ -16,11 +16,19 @@
     <repository>
       <id>AsposeJavaAPI</id>
       <name>Aspose Java API</name>
-      <url>http://repository.aspose.com/repo/</url>
+      <url>https://releases.aspose.com/java/repo/</url>
     </repository>
   </repositories>
 
   <dependencies>
+    <!-- Aspose -->
+    <dependency>
+      <groupId>com.aspose</groupId>
+      <artifactId>aspose-slides</artifactId>
+      <version>20.1</version>
+      <classifier>jdk16</classifier>
+    </dependency>
+
     <dependency>
       <groupId>org.nuxeo.runtime</groupId>
       <artifactId>nuxeo-runtime</artifactId>
@@ -54,14 +62,6 @@
       <artifactId>nuxeo-platform-tag</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- Aspose -->
-    <dependency>
-      <groupId>com.aspose</groupId>
-      <artifactId>aspose-slides</artifactId>
-      <version>20.1</version>
-      <classifier>jdk16</classifier>
-     </dependency>
 
     <!-- Apache POI -->
     <!-- Already imported by nuxeo in v 3.17 -->

@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,22 +38,29 @@ import org.apache.poi.ooxml.POIXMLProperties;
 import org.apache.poi.ooxml.POIXMLProperties.CoreProperties;
 import org.apache.poi.ooxml.POIXMLProperties.ExtendedProperties;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
 import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.apache.poi.xslf.usermodel.XSLFTheme;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nuxeo.ecm.automation.OperationContext;
+import org.nuxeo.ecm.automation.OperationException;
+import org.nuxeo.ecm.automation.core.rendering.RenderingService;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
+import org.nuxeo.ecm.platform.rendering.api.RenderingException;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontList;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTEmbeddedFontListEntry;
 
+import freemarker.template.TemplateException;
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
 /**
@@ -357,17 +365,18 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         if (blob == null) {
             return result;
         }
-        
+
         try (XMLSlideShow ppt = new XMLSlideShow(blob.getStream())) {
             result = getThumbnail(ppt.getSlides().get(slideNumber), maxWidth, format);
         }
-        
+
         return result;
     }
 
     @Override
-    public Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format) throws IOException {
-        
+    public Blob getThumbnail(DocumentModel doc, String xpath, int slideNumber, int maxWidth, String format)
+            throws IOException {
+
         return getThumbnail(PowerPointUtils.getBlob(doc, xpath), slideNumber, maxWidth, format);
     }
 
@@ -386,6 +395,81 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
 
         return namesAndMasters;
 
+    }
+
+    // ============================================================
+    // Replace Text
+    // ============================================================
+    // IMPORTANT RESTRICTION: The expression to replace (like ${doc["myschema:myfield"]})
+    // must not contain lines.
+    public Blob renderWithTemplate(DocumentModel doc, Blob template, String newFileName) throws Exception {
+
+        Blob result = null;
+        
+        File templateFile = template.getFile();
+
+        result = Blobs.createBlobWithExtension(".pptx");
+        File resultFile = result.getFile();
+
+        try (InputStream is = new FileInputStream(templateFile.getAbsolutePath());
+             OutputStream os = new FileOutputStream(resultFile.getAbsolutePath())) {
+
+            try (XMLSlideShow ppt = new XMLSlideShow(is)) {
+                for (XSLFSlide slide : ppt.getSlides()) {
+                    for (XSLFShape shape : slide.getShapes()) {
+                        if (shape instanceof XSLFTextShape) {
+                            XSLFTextShape textShape = (XSLFTextShape) shape;
+                            String text = textShape.getText();
+                            String newText = replaceText(text, doc);
+                            if(!newText.equals(text)) {
+                                textShape.setText(newText);
+                            }
+                            /*
+                            for (XSLFTextParagraph paragraph : textShape.getTextParagraphs()) {
+                                for (XSLFTextRun run : paragraph.getTextRuns()) {
+                                    String text = run.getRawText();
+                                    String newText = replaceText(text, doc);
+                                    if(!text.equals(newText)) {
+                                        run.setText(newText);
+                                    }
+                                }
+                            }
+                            */
+                        }
+                    }
+                }
+    
+                ppt.write(os);
+                
+            } catch (IOException e) {
+                throw new NuxeoException(e);
+            }
+        } catch (IOException e) {
+            throw new NuxeoException(e);
+        }
+
+        if(newFileName == null) {
+            newFileName = template.getFilename();
+        }
+        if(newFileName == null) {
+            newFileName = doc.getTitle();
+        }
+        if(!StringUtils.endsWithIgnoreCase(newFileName, ".pptx")) {
+            newFileName += ".pptx";
+        }
+        result.setFilename(newFileName);
+        result.setMimeType(PPTX_MIMETYPE);
+        return result;
+    }
+    
+    protected String replaceText(String text, DocumentModel doc) throws OperationException, RenderingException, TemplateException, IOException {
+        OperationContext ctx = new OperationContext(doc.getCoreSession());
+        ctx.setInput(doc);
+        ctx.put("doc", doc);
+        
+        String newText = RenderingService.getInstance().render("ftl", text, ctx);
+
+        return newText;
     }
 
     // ============================================================
@@ -429,7 +513,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
             width = maxWidth;
             height = (int) (height * scale);
         }
-        
+
         // Thanks to Apache example, PPTX2PNG
         // BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);

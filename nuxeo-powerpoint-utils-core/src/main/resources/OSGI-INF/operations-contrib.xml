@@ -9,6 +9,8 @@
     <operation class="nuxeo.powerpoint.utils.operations.MergePresentationsOp"/>
     <operation class="nuxeo.powerpoint.utils.operations.SplitPresentationOp"/>
     <operation class="nuxeo.powerpoint.utils.operations.SetAsposeLicenseOp"/>
+    
+    <operation class="nuxeo.powerpoint.utils.operations.RenderWithTemplateOp"/>
   </extension>
 
 </component>

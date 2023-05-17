@@ -1,6 +1,7 @@
 package nuxeo.powerpoint.utils.aspose;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
@@ -8,23 +9,32 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nuxeo.ecm.automation.OperationContext;
+import org.nuxeo.ecm.automation.OperationException;
+import org.nuxeo.ecm.automation.core.rendering.RenderingService;
 import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.Blobs;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.NuxeoException;
+import org.nuxeo.ecm.platform.rendering.api.RenderingException;
 
+import com.aspose.slides.IAutoShape;
 import com.aspose.slides.IFontData;
 import com.aspose.slides.ILayoutSlide;
 import com.aspose.slides.IMasterLayoutSlideCollection;
 import com.aspose.slides.IMasterSlide;
 import com.aspose.slides.IMasterSlideCollection;
+import com.aspose.slides.IParagraph;
+import com.aspose.slides.IShape;
 import com.aspose.slides.ISlide;
 import com.aspose.slides.ISlideCollection;
+import com.aspose.slides.ITextFrame;
 import com.aspose.slides.Presentation;
 import com.aspose.slides.SaveFormat;
 
+import freemarker.template.TemplateException;
 import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
@@ -328,6 +338,78 @@ public class PowerPointUtilsWithAspose implements PowerPointUtils {
     public static void setLicense(String pathToLicenseFile) {
         com.aspose.slides.License license = new com.aspose.slides.License();
         license.setLicense(pathToLicenseFile);
+    }
+
+    // ============================================================
+    // Replace Text
+    // ============================================================
+    // IMPORTANT RESTRICTION: The expression to replace (like ${doc["myschema:myfield"]})
+    // must not contain lines.
+    public Blob renderWithTemplate(DocumentModel doc, Blob template, String newFileName) throws Exception {
+
+        Blob result = null;
+        
+        result = Blobs.createBlobWithExtension(".pptx");
+        File resultFile = result.getFile();
+        
+        try {
+            Presentation pres = new Presentation(template.getStream());
+            ISlideCollection slides = pres.getSlides();
+
+            for (ISlide slide : slides) {
+                for (IShape shape : slide.getShapes()) {
+                    if (shape instanceof IAutoShape) {
+                        ITextFrame textFrame = ((IAutoShape) shape).getTextFrame();
+                        if (textFrame != null) {
+                            for (IParagraph para : textFrame.getParagraphs()) {
+                                String text = para.getText();
+                                String newText = replaceText(text, doc);
+                                if(!newText.equals(text)) {
+                                    para.setText(newText);
+                                }
+                                /*
+                                for (IPortion portion : para.getPortions()) {
+                                    if (portion.getText().contains(oldString)) {
+                                        portion.setText(portion.getText().replace(oldString, newString));
+                                    }
+                                }
+                                */
+                            }
+                        }
+                    }
+                }
+            }
+
+            pres.save(resultFile.getAbsolutePath(), SaveFormat.Pptx);
+
+        } catch (IOException e) {
+            throw new NuxeoException(e);
+        }
+
+
+        if(newFileName == null) {
+            newFileName = template.getFilename();
+        }
+        if(newFileName == null) {
+            newFileName = doc.getTitle();
+        }
+        if(!StringUtils.endsWithIgnoreCase(newFileName, ".pptx")) {
+            newFileName += ".pptx";
+        }
+        result.setFilename(newFileName);
+        result.setMimeType(PPTX_MIMETYPE);
+        return result;
+        
+    }
+    
+    protected String replaceText(String text, DocumentModel doc) throws OperationException, RenderingException, TemplateException, IOException {
+        OperationContext ctx = new OperationContext(doc.getCoreSession());
+        ctx.setInput(doc);
+        ctx.put("doc", doc);
+        
+        String newText = RenderingService.getInstance().render("ftl", text, ctx);
+
+        return newText;
     }
     
 

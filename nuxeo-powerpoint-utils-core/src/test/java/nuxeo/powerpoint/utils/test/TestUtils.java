@@ -26,10 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.xslf.usermodel.XSLFComment;
-import org.apache.poi.xslf.usermodel.XSLFComments;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.nuxeo.common.utils.FileUtils;
-import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 

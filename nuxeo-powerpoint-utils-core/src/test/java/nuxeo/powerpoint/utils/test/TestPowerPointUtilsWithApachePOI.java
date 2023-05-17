@@ -20,6 +20,7 @@ package nuxeo.powerpoint.utils.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -41,7 +42,11 @@ import org.nuxeo.ecm.automation.core.util.BlobList;
 import org.nuxeo.ecm.automation.test.AutomationFeature;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
+import org.nuxeo.ecm.core.api.blobholder.SimpleBlobHolder;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
+import org.nuxeo.ecm.core.convert.api.ConversionService;
 import org.nuxeo.ecm.core.test.DefaultRepositoryInit;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
@@ -73,6 +78,9 @@ public class TestPowerPointUtilsWithApachePOI {
 
     @Inject
     protected ImagingService imagingService;
+    
+    @Inject
+    protected ConversionService conversionService;
 
     @Test
     public void shouldSplitABlobPresentation() throws Exception {
@@ -353,6 +361,37 @@ public class TestPowerPointUtilsWithApachePOI {
         ImageInfo info = imagingService.getImageInfo(result);
         assertEquals(200, info.getWidth());
 
+    }
+    
+    @Test
+    public void shouldReplaceText() throws Exception {
+        
+        File testFile = FileUtils.getResourceFileFromContext("files/template.pptx");
+        Blob template = new FileBlob(testFile);
+        // Get the original template for comparison, later
+        SimpleBlobHolder blobHolder = new SimpleBlobHolder(template);
+        BlobHolder resultBlob = conversionService.convert("any2text", blobHolder, null);
+        String templateText = new String(resultBlob.getBlob().getByteArray(), "UTF-8");
+        
+        DocumentModel doc = session.createDocumentModel("/", "testfile", "File");
+        doc.setPropertyValue("dc:title", "The Title");
+        doc.setPropertyValue("dc:description", "The Description\nWith one line");
+        doc = session.createDocument(doc);
+        
+        PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
+        Blob result = pptUtils.renderWithTemplate(doc, template, null);
+        
+        assertNotNull(result);
+        
+        blobHolder = new SimpleBlobHolder(result);
+        resultBlob = conversionService.convert("any2text", blobHolder, null);
+        String finalText = new String(resultBlob.getBlob().getByteArray(), "UTF-8");
+        assertNotNull(finalText);
+        assertNotEquals(templateText, finalText);
+        assertTrue(finalText.indexOf("The Title") > -1);
+        assertTrue(finalText.indexOf("The Description\nWith one line") > -1);
+        assertTrue(finalText.indexOf("Administrator") > -1);
+        
     }
 
 }

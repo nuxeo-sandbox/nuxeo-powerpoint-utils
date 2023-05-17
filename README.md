@@ -17,6 +17,7 @@ The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](http
   * [Conversion.PowerPointGetSlide](#conversionpowerpointgetslide)
   * [Conversion.PowerPointGetThumbnails](#conversionpowerpointgetthumbnails)
   * [Conversion.PowerPointGetOneThumbnail](#conversionpowerpointgetonethumbnail)
+  * [Conversion.RenderDocumentWithPowerPointTemplate](#conversionrenderdocumentwithpowerpointtemplate)
   * [Conversion.SetAsposeSlidesLicense](#conversionsetasposeslideslicense)
 - [Apache POI vs Aspose](#apache-poi-vs-aspose)
 - [Example of Properties Output](#example-of-properties-output)
@@ -165,6 +166,52 @@ Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide d
     * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
     * Slides rendered with Aspose usually have a better quality.
 * Returns a `Blob`, an image rendition of the slide, in the desired size and format. The file name is `{original-file-name}-{slideNumberStartAt1}.{format}` **WARNING** When you request slide 3 (0-based) the output will be `... -4 ...`.
+
+#### Conversion.RenderDocumentWithPowerPointTemplate
+
+Create a pptx from a template and the input doc. In the pptx template, add FreeMarker expressions, such as `${doc[\"schema:field\"]}`. The operation replaces the values and returns a new blob.
+
+⚠️ WARNING: An expression must be set on a single ligne. Create a new text block in PowerPoint if needed. For example, this...
+
+```
+ ----------------------
+|  Hello               |
+|  ${doc["dc:title"]}  |
+ ----------------------
+```
+ 
+... will fail, while this one works well:
+
+```
+ ----------------------------
+|  Hello ${doc["dc:title"]}  |
+ ----------------------------
+```
+Or:
+
+```
+ ----------------------
+|  Hello               |
+ ----------------------
+ ----------------------
+|  ${doc["dc:title"]}  |
+ ----------------------
+```
+
+* Label: `PowerPoint: Render Document with Template`
+* Input: `Document`
+* Output: `Blob`
+* Parameters:
+  * `templateBlob`
+    * Blob, required
+    * Blob holding a .pptx slides deck. Inside this template, add FreeMarker expressions, such as `${doc[\"schema:field\"]}`
+  * `fileName`
+    * Name of the file to create
+    * If fileName is empty, the returned blob will have the name of the template."
+        + " useAspose tells the operation to use Aspose for the rendition. Default * `useAspose`
+    * boolean, optional (default: `false`)
+    * If `false` (default value), the code will make use of Apache POI, else it uses Aspose
+    * Slides rendered with Aspose usually have a better quality.
 
 #### Conversion.SetAsposeSlidesLicense
 
