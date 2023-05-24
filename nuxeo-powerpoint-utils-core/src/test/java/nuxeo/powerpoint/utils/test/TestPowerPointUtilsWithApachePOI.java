@@ -289,7 +289,7 @@ public class TestPowerPointUtilsWithApachePOI {
     }
 
     @Test
-    public void tesGetSlide() throws Exception {
+    public void testGetSlide() throws Exception {
 
         int SLIDE_NUMBER = 4;
 
@@ -366,7 +366,10 @@ public class TestPowerPointUtilsWithApachePOI {
     @Test
     public void shouldReplaceText() throws Exception {
         
-        File testFile = FileUtils.getResourceFileFromContext("files/template.pptx");
+        String title = "a";
+        String description = "The Long Description blahblah blahblah blahblah blahblah blahblah blahblah\n(With one line)";
+        
+        File testFile = FileUtils.getResourceFileFromContext("files/template-2.pptx");
         Blob template = new FileBlob(testFile);
         // Get the original template for comparison, later
         SimpleBlobHolder blobHolder = new SimpleBlobHolder(template);
@@ -374,12 +377,16 @@ public class TestPowerPointUtilsWithApachePOI {
         String templateText = new String(resultBlob.getBlob().getByteArray(), "UTF-8");
         
         DocumentModel doc = session.createDocumentModel("/", "testfile", "File");
-        doc.setPropertyValue("dc:title", "The Title");
-        doc.setPropertyValue("dc:description", "The Description\nWith one line");
+        doc.setPropertyValue("dc:title", title);
+        doc.setPropertyValue("dc:description", description);
         doc = session.createDocument(doc);
-        
+         
         PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
         Blob result = pptUtils.renderWithTemplate(doc, template, null);
+        
+        // Thius is for visually checking the thing (format, etc.)
+        //File tmp = new File("/Users/thibaud/Desktop/TEMP-TEST-DELETEME/hop.pptx");
+        //result.transferTo(tmp);
         
         assertNotNull(result);
         
@@ -388,8 +395,9 @@ public class TestPowerPointUtilsWithApachePOI {
         String finalText = new String(resultBlob.getBlob().getByteArray(), "UTF-8");
         assertNotNull(finalText);
         assertNotEquals(templateText, finalText);
-        assertTrue(finalText.indexOf("The Title") > -1);
-        assertTrue(finalText.indexOf("The Description\nWith one line") > -1);
+        
+        assertTrue(finalText.indexOf(title) > -1);
+        assertTrue(finalText.indexOf(description) > -1);
         assertTrue(finalText.indexOf("Administrator") > -1);
         
     }

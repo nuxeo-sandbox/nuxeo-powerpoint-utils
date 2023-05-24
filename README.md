@@ -2,7 +2,6 @@
 
 This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split and merge.
 
-[![Build Status](https://qa.nuxeo.org/jenkins/buildStatus/icon?job=Sandbox/sandbox_nuxeo-powerpoint-utils-master)](https://qa.nuxeo.org/jenkins/view/Sandbox/job/Sandbox/job/sandbox_nuxeo-nuxeo-powerpoint-utils-master/)
 
 IMPORTANT
 The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without such valid license key, Aspose can only be used for testing and slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing).
@@ -171,7 +170,16 @@ Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide d
 
 Create a pptx from a template and the input doc. In the pptx template, add FreeMarker expressions, such as `${doc[\"schema:field\"]}`. The operation replaces the values and returns a new blob.
 
-⚠️ WARNING: An expression must be set on a single ligne. Create a new text block in PowerPoint if needed. For example, this...
+⚠️ **WARNING - KNOWN LIMITATIONS** ⚠️
+
+* **The plugin only supports replacing expressions between `${` and `}`**:
+  * It does not handle loops (`<#list...`), conditions (`<#if ...`), etc.
+  * Example of supported expressions:
+    * `${doc["dc:title"]}`
+    * `${doc["customschema:field"]}`
+    * `${Fn.getPrincipal(CurrentUser.name).getFirstName()}`
+    * . . .
+* An expression must be set on a single ligne. Create a new text block in PowerPoint if needed. For example, this...
 
 ```
  ----------------------
@@ -197,6 +205,8 @@ Or:
 |  ${doc["dc:title"]}  |
  ----------------------
 ```
+
+**The operation**:
 
 * Label: `PowerPoint: Render Document with Template`
 * Input: `Document`
