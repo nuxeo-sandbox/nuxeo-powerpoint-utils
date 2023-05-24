@@ -168,7 +168,7 @@ Return a `Blob`, thumbnail of the slide, as PNG of JPEG, in the original slide d
 
 #### Conversion.RenderDocumentWithPowerPointTemplate
 
-Create a pptx from a template and the input doc. In the pptx template, add FreeMarker expressions, such as `${doc[\"schema:field\"]}`. The operation replaces the values and returns a new blob.
+Create a pptx from a template and the input doc. In the pptx template, add FreeMarker expressions, such as `${doc["schema:field"]}`. The operation replaces the values and returns a new blob.
 
 ⚠️ **WARNING - KNOWN LIMITATIONS** ⚠️
 
