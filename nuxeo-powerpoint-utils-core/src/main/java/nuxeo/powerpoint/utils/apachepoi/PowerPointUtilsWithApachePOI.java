@@ -408,9 +408,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
     // Replace Text
     // ============================================================
     // IMPORTANT RESTRICTIONS:
-    //     1. The expression to replace (like ${doc["myschema:myfield"]})
-    //        must not contain lines.
-    //     2. We handle only Freemarker expression starting with ${, and we expect an end }.
+    // 1. The expression to replace (like ${doc["myschema:myfield"]})
+    // must not contain lines.
+    // 2. We handle only Freemarker expression starting with ${, and we expect an end }.
     public Blob renderWithTemplate(DocumentModel doc, Blob template, String newFileName) throws Exception {
 
         Blob result = null;
@@ -428,10 +428,10 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                     for (XSLFShape shape : slide.getShapes()) {
                         if (shape instanceof XSLFTextShape) {
                             XSLFTextShape textShape = (XSLFTextShape) shape;
-                            
+
                             // We just check for freemarker indice, limiting the usage to ${ (so no <#if and loops etc.)
                             String textFromShape = textShape.getText();
-                            if(textFromShape.indexOf("${") < 0) {
+                            if (textFromShape.indexOf("${") < 0) {
                                 continue;
                             }
 
@@ -439,7 +439,7 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                                 boolean isReplacing = false;
                                 StringBuilder accumulatedText = new StringBuilder();
                                 List<XSLFTextRun> involvedRuns = new ArrayList<>();
-                                
+
                                 for (XSLFTextRun run : paragraph.getTextRuns()) {
                                     String textInRun = run.getRawText();
                                     if (!isReplacing && textInRun.contains("${")) {
@@ -454,16 +454,17 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                                         break;
                                     }
                                 }
-                                
+
                                 String finalAccumulated = accumulatedText.toString();
-                                //System.out.println("finalAccumulated: " + finalAccumulated);
+                                // System.out.println("finalAccumulated: " + finalAccumulated);
                                 String replacedText = replaceText(finalAccumulated, doc);
-                                //System.out.println("replacedText: " + replacedText);
-    
-                                if(!replacedText.equals(finalAccumulated)) {    
+                                // System.out.println("replacedText: " + replacedText);
+
+                                if (!replacedText.equals(finalAccumulated)) {
                                     // Now distribute the replaced text back to the involved runs
                                     int textStart = 0;
-                                    int remainingLength = replacedText.length();  // Length of the remaining part of the replaced text
+                                    int remainingLength = replacedText.length(); // Length of the remaining part of the
+                                                                                 // replaced text
                                     int runIndex;
                                     for (runIndex = 0; runIndex < involvedRuns.size(); runIndex++) {
                                         XSLFTextRun run = involvedRuns.get(runIndex);
@@ -471,27 +472,33 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                                             // If there's still some replacement text left
                                             int originalRunLength = run.getRawText().length();
                                             if (originalRunLength < remainingLength) {
-                                                // If the original run's text is shorter than the remaining part of the replaced text,
-                                                // take as much of the replaced text as the length of the original run's text
-                                                String newTextForRun = replacedText.substring(textStart, textStart + originalRunLength);
+                                                // If the original run's text is shorter than the remaining part of the
+                                                // replaced text,
+                                                // take as much of the replaced text as the length of the original run's
+                                                // text
+                                                String newTextForRun = replacedText.substring(textStart,
+                                                        textStart + originalRunLength);
                                                 run.setText(newTextForRun);
                                                 textStart += originalRunLength;
                                                 remainingLength -= originalRunLength;
                                             } else {
-                                                // If the original run's text is not shorter than the remaining part of the replaced text,
+                                                // If the original run's text is not shorter than the remaining part of
+                                                // the replaced text,
                                                 // put the whole remaining part of the replaced text into this run
                                                 String newTextForRun = replacedText.substring(textStart);
                                                 run.setText(newTextForRun);
-                                                remainingLength = 0;  // No replacement text left
+                                                remainingLength = 0; // No replacement text left
                                             }
                                         } else {
-                                            // If there's no replacement text left but there are still some runs that were part of the original placeholder,
+                                            // If there's no replacement text left but there are still some runs that
+                                            // were part of the original placeholder,
                                             // set their text to an empty string
                                             run.setText("");
                                         }
                                     }
 
-                                    // If there's still some replacement text left after going through all involved runs, create new runs
+                                    // If there's still some replacement text left after going through all involved
+                                    // runs, create new runs
                                     while (remainingLength > 0) {
                                         XSLFTextRun newRun = paragraph.addNewTextRun();
                                         String newTextForRun = replacedText.substring(textStart);
@@ -500,8 +507,9 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
                                     }
                                 }
                             }
-                            
-                            /* Oroginal code (first implementation)
+
+                            /*
+                             * Oroginal code (first implementation)
                              * for (XSLFTextParagraph paragraph : textShape.getTextParagraphs()) {
                              * for (XSLFTextRun run : paragraph.getTextRuns()) {
                              * String text = run.getRawText();
@@ -537,104 +545,6 @@ public class PowerPointUtilsWithApachePOI implements PowerPointUtils {
         result.setFilename(newFileName);
         result.setMimeType(PPTX_MIMETYPE);
         return result;
-    }
-
-    public enum Status {
-        UNKNOWN(-1), FIRST(0), BETWEEN(1), LAST(2);
-
-        private final int value;
-
-        Status(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return this.value;
-        }
-    }
-
-    public class TextRunWithExpression {
-
-        public Status status = Status.UNKNOWN;
-
-        public XSLFTextRun run;
-
-        public TextRunWithExpression(XSLFTextRun run, Status status) {
-            this.run = run;
-            this.status = status;
-        }
-    }
-
-    public class TextRunsWithExpression {
-        List<TextRunWithExpression> runs = new ArrayList<TextRunWithExpression>();
-
-        TextRunsWithExpression() {
-            
-        }
-
-        TextRunsWithExpression(XSLFTextRun run) {
-            runs.add(new TextRunWithExpression(run, Status.FIRST));
-        }
-
-        public void add(XSLFTextRun run, Status status) {
-            runs.add(new TextRunWithExpression(run, status));
-        }
-
-        public boolean looksOk() {
-
-            if (runs.size() >= 3) {
-                return runs.get(0).status.equals(Status.FIRST) && runs.get(runs.size() - 1).status.equals(Status.LAST);
-            }
-
-            return false;
-        }
-        
-        public String getText() {
-            
-            StringBuilder sb = new StringBuilder();
-            for(TextRunWithExpression run : runs) {
-                sb.append(run.run.getRawText());
-            }
-            
-            return sb.toString();
-        }
-    }
-
-    // Get/Set properties but the text
-    public class TextRunProperties {
-        private double fontSize;
-
-        private String fontFamily;
-
-        private boolean bold;
-
-        private boolean italic;
-
-        private boolean underline;
-
-        private PaintStyle fontColor;
-
-        private double characterSpacing;
-
-        public TextRunProperties(XSLFTextRun run) {
-            this.fontSize = run.getFontSize();
-            this.fontFamily = run.getFontFamily();
-            this.bold = run.isBold();
-            this.italic = run.isItalic();
-            this.underline = run.isUnderlined();
-            this.fontColor = run.getFontColor();
-            this.characterSpacing = run.getCharacterSpacing();
-        }
-
-        public void applyTo(XSLFTextRun run) {
-            run.setFontSize(this.fontSize);
-            run.setFontFamily(this.fontFamily);
-            run.setBold(this.bold);
-            run.setItalic(this.italic);
-            run.setUnderlined(this.underline);
-            run.setFontColor(this.fontColor);
-            run.setCharacterSpacing(characterSpacing);
-        }
     }
 
     protected String replaceText(String text, DocumentModel doc)

@@ -91,7 +91,7 @@ public interface PowerPointUtils {
      * @param blobs, the PowerPoint presentations
      * @param reuseMasters
      * @param fileName
-     * @return the presentation mergin all the input blobs
+     * @return the presentation merging all the input blobs
      * @since 10.10
      */
     Blob merge(BlobList blobs, boolean reuseMasters, String fileName);
@@ -217,13 +217,15 @@ public interface PowerPointUtils {
      * a new pptx with the result.
      * 
      * Check each implementation for limitation. As of first implementation:
-     *   - Apache POI: The expression must be embedded in lines.
-     *     So, for example, this...
+     *   - Apache POI:
+     *     • Only ${...} expressions are supported (so no loops, no <#if, etc.)
+     *     • The expression must be embedded in lines.
+     *        So, for example, this...
      *                  ----------------------
      *                 |  Hello               |
      *                 |  ${doc["dc:title"]}  |
      *                  ----------------------
-     *     ... will fail, while this one works well:
+     *        ... will fail, while this one works well:
      *                  ----------------------------
      *                 |  Hello ${doc["dc:title"]}  |
      *                  ----------------------------

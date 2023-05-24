@@ -384,7 +384,7 @@ public class TestPowerPointUtilsWithApachePOI {
         PowerPointUtilsWithApachePOI pptUtils = new PowerPointUtilsWithApachePOI();
         Blob result = pptUtils.renderWithTemplate(doc, template, null);
         
-        // Thius is for visually checking the thing (format, etc.)
+        // This is for visually checking the thing (format, etc.)
         //File tmp = new File("/Users/thibaud/Desktop/TEMP-TEST-DELETEME/hop.pptx");
         //result.transferTo(tmp);
         
