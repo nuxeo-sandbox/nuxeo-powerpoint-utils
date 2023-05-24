@@ -19,7 +19,8 @@ import nuxeo.powerpoint.utils.aspose.PowerPointUtilsWithAspose;
         + " The template parameter is required, it is a blob holding a .pptx slides deck."
         + " Inside this template, add FreeMarker expressions, such as ${doc[\"schema:field\"]}"
         + " The operation replaces the values and returns a new blob."
-        + " WARNING: an expression must be set on a single ligne. create a new text block in PowerPoint if needed."
+        + " WARNING: An expression must be set on a single ligne. Create a new text block in PowerPoint if needed."
+        + " (see documentation for existing limitations)"
         + " If fileName is empty, the returned blob will have the name of the template."
         + " useAspose tells the operation to use Aspose for the rendition. Default is Apache POI.")
 public class RenderWithTemplateOp {
