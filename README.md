@@ -394,7 +394,7 @@ Calling `Conversion.GetPowerPointPresentationProperties` with `useAspose` set to
 
 # Build
 
-git clone https://github.com/nuxeo-powerpoint-utils.git     cd nuxeo-powerpoint-utils
+git clone https://github.com/nuxeo-sandbox/nuxeo-powerpoint-utils.git && cd nuxeo-powerpoint-utils
 
 mvn clean install
 
