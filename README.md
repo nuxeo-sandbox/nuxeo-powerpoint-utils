@@ -1,12 +1,12 @@
 # nuxeo-powerpoint-utils
 
-This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split and merge.
+This plugin for [Nuxeo Platform](http://www.nuxeo.com) allows for handling PowerPoint sides: Extract information, split, render with template, ...
 
+The plugin uses [Apache POI](https://poi.apache.org).
 
-IMPORTANT
-The plugin uses [Apache POI](https://poi.apache.org) and/or [Aspose Slides](https://products.aspose.com/slides), _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without such valid license key, Aspose can only be used for testing and slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing).
-
-(See below for more details)
+> [!IMPORTANT]
+> * Versions 2.0.n are for LTS 2021 and can use [Aspose Slides](https://products.aspose.com/slides) instead of Apache POI, _but_ some features (like merging slides) are only available using Aspose, which requires a valid license. Without such valid license key, Aspose can only be used for testing and slides created with the tool are [watermarked](https://docs.aspose.com/display/slidesjava/Licensing). (See below for more details)
+> * Starting with Nuxeo LTS 2023 (Nuxeo PowerPoint utils version 2O23.n), the plugin does not use aspose anymore (no time to debug issues when upgrading, in the context of this sandbox plugin), and calls to operations with Aspose throw and error, "Version 2023.n of Nuxeo PowerPoint Utilities does not support Aspose"
 
 # Table of Content
 - [Usage](#usage)

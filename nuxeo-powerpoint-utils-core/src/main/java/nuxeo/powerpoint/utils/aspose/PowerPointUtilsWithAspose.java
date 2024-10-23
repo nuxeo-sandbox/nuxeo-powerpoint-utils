@@ -38,7 +38,22 @@ import freemarker.template.TemplateException;
 import nuxeo.powerpoint.utils.apachepoi.PowerPointUtilsWithApachePOI;
 import nuxeo.powerpoint.utils.api.PowerPointUtils;
 
+/**
+ * TODO: Not working since moving to LTS2023 a  nd Aspose 24.9,
+ * and we need the plugin available quickly for other things
+ * => To be explored "later"...
+ * 
+ * @since TODO
+ */
 public class PowerPointUtilsWithAspose implements PowerPointUtils {
+    
+    /*
+     * TODO Fix the ClassDefNotFound for com.aspose.slides.Presentation.Presentation
+     * and other errors.
+     */
+    public PowerPointUtilsWithAspose() {
+        throw new NuxeoException("Version 2023.n of Nuxeo PowerPoint Utilities does not support Aspose.");
+    }
 
     // ============================================================
     // PROPERTIES
